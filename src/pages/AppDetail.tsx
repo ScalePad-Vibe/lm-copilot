@@ -3,6 +3,7 @@ import { useAppStore } from "@/context/AppStoreContext";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect } from "react";
 import { MiniAppWorkspace } from "@/components/workspace/MiniAppWorkspace";
+import { OpportunitiesWorkspace } from "@/components/workspace/OpportunitiesWorkspace";
 import { POCBanner } from "@/components/layout/POCBanner";
 import { ArrowLeft } from "lucide-react";
 
@@ -76,8 +77,12 @@ export default function AppDetail() {
           </p>
         </div>
 
-        {/* Workspace */}
-        <MiniAppWorkspace app={app} />
+        {/* Workspace — use real API workspace for List Opportunities */}
+        {(app.input_schema as any)?.realApi ? (
+          <OpportunitiesWorkspace app={app} />
+        ) : (
+          <MiniAppWorkspace app={app} />
+        )}
       </div>
     </div>
   );
