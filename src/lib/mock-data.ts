@@ -128,4 +128,23 @@ export const SEED_APPS: MarketplaceApp[] = [
     },
     created_at: "2025-03-05T10:00:00Z",
   },
+  {
+    id: "app-007",
+    name: "List Opportunities",
+    description:
+      "View all sales opportunities across your clients with their current stage — pulled live from the ScalePad API.",
+    how_it_works:
+      "Calls the ScalePad List Opportunities endpoint (GET /core/v1/opportunities) using your API key, and displays a table of client names, opportunity titles, and sale stages.",
+    category: "Reporting",
+    icon: "💰",
+    status: "active",
+    version: "1.0.0",
+    author: "ScalePad Team",
+    api_endpoint: "/core/v1/opportunities",
+    input_schema: {
+      realApi: true,
+      fields: [],
+    },
+    created_at: "2025-03-10T10:00:00Z",
+  },
 ];
