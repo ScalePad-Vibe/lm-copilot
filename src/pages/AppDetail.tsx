@@ -77,8 +77,12 @@ export default function AppDetail() {
           </p>
         </div>
 
-        {/* Workspace */}
-        <MiniAppWorkspace app={app} />
+        {/* Workspace — use real API workspace for List Opportunities */}
+        {(app.input_schema as any)?.realApi ? (
+          <OpportunitiesWorkspace app={app} />
+        ) : (
+          <MiniAppWorkspace app={app} />
+        )}
       </div>
     </div>
   );
