@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
   try {
     const { endpoint, method, body } = await req.json();
 
-    const scalepadApiKey = req.headers.get("x-scalepad-api-key");
+    const scalepadApiKey = (req.headers.get("x-scalepad-api-key") || "").trim();
     if (!scalepadApiKey) {
       return new Response(
         JSON.stringify({ error: "Missing x-scalepad-api-key header" }),
@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
     const response = await fetch(`https://api.scalepad.com${endpoint}`, {
       method: method || "GET",
       headers: {
-        Authorization: `Bearer ${scalepadApiKey}`,
+        "x-api-key": scalepadApiKey,
         Accept: "application/json",
         "Content-Type": "application/json",
       },
