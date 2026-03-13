@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { MarketplaceApp } from "@/lib/constants";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Play, AlertTriangle } from "lucide-react";
+import { Loader2, Play, AlertTriangle, Filter } from "lucide-react";
 import {
   Table,
   TableHeader,
@@ -11,6 +11,14 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 interface Opportunity {
   name: string;
@@ -28,6 +36,27 @@ export function OpportunitiesWorkspace({ app }: OpportunitiesWorkspaceProps) {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [hasRun, setHasRun] = useState(false);
+  const [filterClient, setFilterClient] = useState("__all__");
+  const [filterStage, setFilterStage] = useState("__all__");
+  const [filterName, setFilterName] = useState("");
+
+  const uniqueClients = useMemo(
+    () => [...new Set(opportunities.map((o) => o.name))].sort(),
+    [opportunities]
+  );
+  const uniqueStages = useMemo(
+    () => [...new Set(opportunities.map((o) => o.source_stage))].sort(),
+    [opportunities]
+  );
+
+  const filtered = useMemo(() => {
+    return opportunities.filter((o) => {
+      if (filterClient !== "__all__" && o.name !== filterClient) return false;
+      if (filterStage !== "__all__" && o.source_stage !== filterStage) return false;
+      if (filterName && !o.title.toLowerCase().includes(filterName.toLowerCase())) return false;
+      return true;
+    });
+  }, [opportunities, filterClient, filterStage, filterName]);
 
   const handleRun = async () => {
     setLoading(true);
@@ -129,10 +158,41 @@ export function OpportunitiesWorkspace({ app }: OpportunitiesWorkspaceProps) {
 
       {opportunities.length > 0 && (
         <div className="bg-card border border-border rounded-lg overflow-hidden animate-fade-in">
-          <div className="p-4 border-b border-border">
+          <div className="p-4 border-b border-border space-y-3">
             <h4 className="font-heading font-bold text-sm text-foreground">
-              {opportunities.length} Opportunities
+              {filtered.length} of {opportunities.length} Opportunities
             </h4>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
+              <Select value={filterClient} onValueChange={setFilterClient}>
+                <SelectTrigger className="w-[180px] h-8 text-xs">
+                  <SelectValue placeholder="All Clients" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">All Clients</SelectItem>
+                  {uniqueClients.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={filterStage} onValueChange={setFilterStage}>
+                <SelectTrigger className="w-[180px] h-8 text-xs">
+                  <SelectValue placeholder="All Stages" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">All Stages</SelectItem>
+                  {uniqueStages.map((s) => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                placeholder="Search by name…"
+                value={filterName}
+                onChange={(e) => setFilterName(e.target.value)}
+                className="w-[200px] h-8 text-xs"
+              />
+            </div>
           </div>
           <Table>
             <TableHeader>
@@ -143,7 +203,7 @@ export function OpportunitiesWorkspace({ app }: OpportunitiesWorkspaceProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {opportunities.map((opp, i) => (
+              {filtered.map((opp, i) => (
                 <TableRow key={i}>
                   <TableCell className="font-medium">{opp.name}</TableCell>
                   <TableCell>{opp.title}</TableCell>
@@ -154,6 +214,13 @@ export function OpportunitiesWorkspace({ app }: OpportunitiesWorkspaceProps) {
                   </TableCell>
                 </TableRow>
               ))}
+              {filtered.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center text-muted-foreground py-6">
+                    No opportunities match the current filters.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>
