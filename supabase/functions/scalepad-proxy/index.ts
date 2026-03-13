@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
     const response = await fetch(`https://api.scalepad.com${endpoint}`, {
       method: method || "GET",
       headers: {
-        Authorization: `Bearer ${scalepadApiKey}`,
+        "x-api-key": scalepadApiKey,
         Accept: "application/json",
         "Content-Type": "application/json",
       },
