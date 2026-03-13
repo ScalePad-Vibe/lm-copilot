@@ -1,1 +1,4 @@
 project_id = "huotykitdtnycwpnnaup"
+
+[functions.scalepad-proxy]
+verify_jwt = false

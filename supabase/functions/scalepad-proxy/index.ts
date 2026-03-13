@@ -12,19 +12,18 @@ Deno.serve(async (req) => {
   try {
     const { endpoint, method, body } = await req.json();
 
-    // Get the user's ScalePad API key from the request header
     const scalepadApiKey = req.headers.get("x-scalepad-api-key");
     if (!scalepadApiKey) {
       return new Response(
         JSON.stringify({ error: "Missing x-scalepad-api-key header" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     if (!endpoint || !endpoint.startsWith("/") || endpoint.includes("..")) {
       return new Response(
         JSON.stringify({ error: "Invalid endpoint path" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -40,15 +39,17 @@ Deno.serve(async (req) => {
 
     const data = await response.json();
 
-    return new Response(JSON.stringify(data), {
-      status: response.status,
+    // Always return 200 to avoid supabase.functions.invoke treating non-2xx as errors
+    // Include upstream status so the frontend can handle errors from the body
+    return new Response(JSON.stringify({ upstream_status: response.status, ...data }), {
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     console.error("Proxy error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(JSON.stringify({ error: message }), {
-      status: 500,
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
