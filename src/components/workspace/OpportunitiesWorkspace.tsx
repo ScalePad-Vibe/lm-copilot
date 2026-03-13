@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { MarketplaceApp } from "@/lib/constants";
+import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Play, AlertTriangle } from "lucide-react";
 import {
   Table,
@@ -35,22 +36,24 @@ export function OpportunitiesWorkspace({ app }: OpportunitiesWorkspaceProps) {
     setHasRun(true);
 
     try {
-      const res = await fetch("https://api.scalepad.com/core/v1/opportunities?page_size=200", {
-        method: "GET",
+      const { data: json, error: fnError } = await supabase.functions.invoke("scalepad-proxy", {
+        body: {
+          endpoint: "/core/v1/opportunities?page_size=200",
+          method: "GET",
+        },
         headers: {
-          Authorization: `Bearer ${apiKey}`,
-          Accept: "application/json",
+          "x-scalepad-api-key": apiKey,
         },
       });
 
-      if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        throw new Error(`API returned ${res.status}${text ? `: ${text}` : ""}`);
+      if (fnError) {
+        throw new Error(fnError.message || "Edge function error");
       }
 
-      const json = await res.json();
+      if (json?.error) {
+        throw new Error(json.error);
+      }
 
-      // The API returns { data: [...] } with opportunity objects
       const items: Opportunity[] = (json.data || json.items || json || []).map(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (item: any) => ({
