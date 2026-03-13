@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { MarketplaceApp } from "@/lib/constants";
+import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Play, AlertTriangle } from "lucide-react";
 import {
   Table,
