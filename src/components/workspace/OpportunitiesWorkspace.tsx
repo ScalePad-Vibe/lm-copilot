@@ -36,6 +36,27 @@ export function OpportunitiesWorkspace({ app }: OpportunitiesWorkspaceProps) {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [hasRun, setHasRun] = useState(false);
+  const [filterClient, setFilterClient] = useState("__all__");
+  const [filterStage, setFilterStage] = useState("__all__");
+  const [filterName, setFilterName] = useState("");
+
+  const uniqueClients = useMemo(
+    () => [...new Set(opportunities.map((o) => o.name))].sort(),
+    [opportunities]
+  );
+  const uniqueStages = useMemo(
+    () => [...new Set(opportunities.map((o) => o.source_stage))].sort(),
+    [opportunities]
+  );
+
+  const filtered = useMemo(() => {
+    return opportunities.filter((o) => {
+      if (filterClient !== "__all__" && o.name !== filterClient) return false;
+      if (filterStage !== "__all__" && o.source_stage !== filterStage) return false;
+      if (filterName && !o.title.toLowerCase().includes(filterName.toLowerCase())) return false;
+      return true;
+    });
+  }, [opportunities, filterClient, filterStage, filterName]);
 
   const handleRun = async () => {
     setLoading(true);
