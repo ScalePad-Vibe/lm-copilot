@@ -50,6 +50,11 @@ export function OpportunitiesWorkspace({ app }: OpportunitiesWorkspaceProps) {
         throw new Error(fnError.message || "Edge function error");
       }
 
+      if (json?.upstream_status && json.upstream_status !== 200) {
+        const detail = json.errors?.[0]?.detail || json.error || `API returned ${json.upstream_status}`;
+        throw new Error(detail);
+      }
+
       if (json?.error) {
         throw new Error(json.error);
       }
