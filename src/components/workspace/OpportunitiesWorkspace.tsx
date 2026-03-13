@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { MarketplaceApp } from "@/lib/constants";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Play, AlertTriangle } from "lucide-react";
+import { Loader2, Play, AlertTriangle, Filter } from "lucide-react";
 import {
   Table,
   TableHeader,
@@ -11,6 +11,14 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 interface Opportunity {
   name: string;
