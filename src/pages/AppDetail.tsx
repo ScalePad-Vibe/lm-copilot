@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useEffect } from "react";
 import { MiniAppWorkspace } from "@/components/workspace/MiniAppWorkspace";
 import { OpportunitiesWorkspace } from "@/components/workspace/OpportunitiesWorkspace";
+import { InitiativeManagerWorkspace } from "@/components/workspace/InitiativeManagerWorkspace";
 import { POCBanner } from "@/components/layout/POCBanner";
 import { ArrowLeft } from "lucide-react";
 
