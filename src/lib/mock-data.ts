@@ -147,4 +147,24 @@ export const SEED_APPS: MarketplaceApp[] = [
     },
     created_at: "2025-03-10T10:00:00Z",
   },
+  {
+    id: "app-008",
+    name: "Initiative Manager",
+    description:
+      "View existing ScalePad Initiatives, configure a template with all attributes, then deploy it across multiple clients simultaneously.",
+    how_it_works:
+      "Fetches your initiatives and client list from the Lifecycle Manager API, lets you build or clone an initiative template (status, priority, schedule, budgets), select target clients, and deploys the initiative to each client in sequence with real-time progress tracking.",
+    category: "Planning",
+    icon: "🚀",
+    status: "active",
+    version: "1.0.0",
+    author: "ScalePad Team",
+    api_endpoint: "/lifecycle-manager/v1/initiatives",
+    input_schema: {
+      realApi: true,
+      appType: "initiative-manager",
+      fields: [],
+    },
+    created_at: "2025-03-12T10:00:00Z",
+  },
 ];

@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useEffect } from "react";
 import { MiniAppWorkspace } from "@/components/workspace/MiniAppWorkspace";
 import { OpportunitiesWorkspace } from "@/components/workspace/OpportunitiesWorkspace";
+import { InitiativeManagerWorkspace } from "@/components/workspace/InitiativeManagerWorkspace";
 import { POCBanner } from "@/components/layout/POCBanner";
 import { ArrowLeft } from "lucide-react";
 
@@ -77,8 +78,10 @@ export default function AppDetail() {
           </p>
         </div>
 
-        {/* Workspace — use real API workspace for List Opportunities */}
-        {(app.input_schema as any)?.realApi ? (
+        {/* Workspace — route to appropriate workspace */}
+        {(app.input_schema as any)?.appType === "initiative-manager" ? (
+          <InitiativeManagerWorkspace />
+        ) : (app.input_schema as any)?.realApi ? (
           <OpportunitiesWorkspace app={app} />
         ) : (
           <MiniAppWorkspace app={app} />

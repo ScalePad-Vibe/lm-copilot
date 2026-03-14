@@ -1,0 +1,871 @@
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useAuth } from "@/context/AuthContext";
+import {
+  fetchAllInitiatives,
+  fetchAllClients,
+  deployInitiativeToClient,
+  type Initiative,
+  type Client,
+  type TemplateForm,
+  type BudgetLineItemForm,
+  type RecurringLineItemForm,
+  type ClientDeployment,
+  type StepStatus,
+} from "@/lib/initiative-api";
+import {
+  Loader2,
+  Search,
+  X,
+  Plus,
+  Trash2,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Play,
+  RefreshCw,
+  AlertTriangle,
+  ChevronRight,
+} from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+
+// --- Constants ---
+
+const STATUSES = ["New", "Proposed", "Approved", "InProgress", "OnHold", "Declined", "Completed"];
+const PRIORITIES = ["None", "Low", "Medium", "High"];
+const DEPLOY_STEPS = [
+  "Create Initiative Shell",
+  "Set Status",
+  "Set Priority",
+  "Set Schedule",
+  "Set One-Time Budget",
+  "Set Recurring Budget",
+];
+
+const STATUS_COLORS: Record<string, string> = {
+  New: "bg-primary/15 text-primary",
+  Proposed: "bg-purple-500/15 text-purple-400",
+  Approved: "bg-success/15 text-success",
+  InProgress: "bg-cyan-500/15 text-cyan-400",
+  OnHold: "bg-warning/15 text-warning",
+  Declined: "bg-destructive/15 text-destructive",
+  Completed: "bg-muted text-muted-foreground",
+};
+
+const PRIORITY_COLORS: Record<string, string> = {
+  High: "bg-destructive/15 text-destructive",
+  Medium: "bg-warning/15 text-warning",
+  Low: "bg-primary/15 text-primary",
+  None: "bg-muted text-muted-foreground",
+};
+
+function emptyForm(): TemplateForm {
+  return {
+    name: "",
+    executive_summary: "",
+    status: "New",
+    priority: "None",
+    fiscal_quarter: { year: new Date().getFullYear(), quarter: 1 },
+    unscheduled: false,
+    budget_line_items: [],
+    recurring_line_items: [],
+  };
+}
+
+// --- Sub-components ---
+
+function Badge({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${className}`}>
+      {children}
+    </span>
+  );
+}
+
+function StepIcon({ status }: { status: StepStatus }) {
+  if (status === "success") return <CheckCircle2 className="w-4 h-4 text-success" />;
+  if (status === "error") return <XCircle className="w-4 h-4 text-destructive" />;
+  if (status === "running") return <Loader2 className="w-4 h-4 text-primary animate-spin" />;
+  return <Clock className="w-4 h-4 text-muted-foreground" />;
+}
+
+// --- Main Component ---
+
+export function InitiativeManagerWorkspace() {
+  const { apiKey } = useAuth();
+
+  // Data
+  const [initiatives, setInitiatives] = useState<Initiative[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadingText, setLoadingText] = useState("");
+
+  // Library filters
+  const [libSearch, setLibSearch] = useState("");
+  const [libStatus, setLibStatus] = useState("All");
+  const [libPriority, setLibPriority] = useState("All");
+
+  // Builder
+  const [selectedInitiative, setSelectedInitiative] = useState<Initiative | null>(null);
+  const [form, setForm] = useState<TemplateForm>(emptyForm());
+  const [activeTab, setActiveTab] = useState<"details" | "budget" | "recurring" | "clients">("details");
+
+  // Client selection
+  const [clientSearch, setClientSearch] = useState("");
+  const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
+
+  // Deployment
+  const [deployState, setDeployState] = useState<{
+    isOpen: boolean;
+    progress: ClientDeployment[];
+    overallStatus: "running" | "complete";
+    succeeded: number;
+    failed: number;
+  } | null>(null);
+
+  // --- Load data ---
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    setLoadingText("Loading initiatives...");
+    try {
+      const [initData, clientData] = await Promise.all([
+        fetchAllInitiatives(apiKey).then((d) => {
+          setLoadingText("Loading clients...");
+          return d;
+        }),
+        fetchAllClients(apiKey),
+      ]);
+      setInitiatives(initData);
+      setClients(clientData);
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : "Failed to load data");
+    } finally {
+      setLoading(false);
+    }
+  }, [apiKey]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // --- Filtered initiatives ---
+  const filteredInitiatives = useMemo(() => {
+    return initiatives.filter((i) => {
+      if (libStatus !== "All" && i.status !== libStatus) return false;
+      if (libPriority !== "All" && i.priority !== libPriority) return false;
+      if (libSearch && !i.name.toLowerCase().includes(libSearch.toLowerCase())) return false;
+      return true;
+    });
+  }, [initiatives, libSearch, libStatus, libPriority]);
+
+  // --- Filtered clients ---
+  const filteredClients = useMemo(() => {
+    if (!clientSearch) return clients;
+    return clients.filter((c) => c.name.toLowerCase().includes(clientSearch.toLowerCase()));
+  }, [clients, clientSearch]);
+
+  // --- Load template from initiative ---
+  const loadTemplate = (init: Initiative) => {
+    setSelectedInitiative(init);
+    setForm({
+      name: init.name,
+      executive_summary: init.executive_summary || "",
+      status: init.status,
+      priority: init.priority,
+      fiscal_quarter: init.fiscal_quarter
+        ? { year: init.fiscal_quarter.year, quarter: init.fiscal_quarter.quarter }
+        : { year: new Date().getFullYear(), quarter: 1 },
+      unscheduled: !init.fiscal_quarter,
+      budget_line_items: (init.budget?.line_items || []).map((li) => ({
+        label: li.label,
+        amount: (li.cost_subunits / 100).toFixed(2),
+        cost_type: li.cost_type as "Fixed" | "PerAsset",
+      })),
+      recurring_line_items: (init.budget?.recurring_line_items || []).map((li) => ({
+        label: li.label,
+        amount: (li.cost_subunits / 100).toFixed(2),
+        cost_type: li.cost_type as "Fixed" | "PerAsset",
+        frequency: li.frequency as "Monthly" | "Yearly",
+      })),
+    });
+    setSelectedClientIds([]);
+    setActiveTab("details");
+  };
+
+  const clearForm = () => {
+    setSelectedInitiative(null);
+    setForm(emptyForm());
+    setSelectedClientIds([]);
+  };
+
+  // --- Form updaters ---
+  const updateForm = (patch: Partial<TemplateForm>) => setForm((f) => ({ ...f, ...patch }));
+
+  const updateBudgetItem = (idx: number, patch: Partial<BudgetLineItemForm>) =>
+    setForm((f) => ({
+      ...f,
+      budget_line_items: f.budget_line_items.map((item, i) => (i === idx ? { ...item, ...patch } : item)),
+    }));
+
+  const updateRecurringItem = (idx: number, patch: Partial<RecurringLineItemForm>) =>
+    setForm((f) => ({
+      ...f,
+      recurring_line_items: f.recurring_line_items.map((item, i) => (i === idx ? { ...item, ...patch } : item)),
+    }));
+
+  // --- Budget totals ---
+  const budgetTotal = useMemo(
+    () => form.budget_line_items.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0),
+    [form.budget_line_items]
+  );
+
+  const monthlyTotal = useMemo(
+    () =>
+      form.recurring_line_items
+        .filter((i) => i.frequency === "Monthly")
+        .reduce((s, i) => s + (parseFloat(i.amount) || 0), 0),
+    [form.recurring_line_items]
+  );
+
+  const yearlyTotal = useMemo(
+    () =>
+      form.recurring_line_items
+        .filter((i) => i.frequency === "Yearly")
+        .reduce((s, i) => s + (parseFloat(i.amount) || 0), 0),
+    [form.recurring_line_items]
+  );
+
+  // --- Validation ---
+  const canDeploy = form.name.trim() !== "" && selectedClientIds.length > 0;
+
+  // --- Deploy ---
+  const handleDeploy = async () => {
+    const clientMap = new Map(clients.map((c) => [c.id, c.name]));
+    const progress: ClientDeployment[] = selectedClientIds.map((cid) => ({
+      clientId: cid,
+      clientName: clientMap.get(cid) || cid,
+      steps: DEPLOY_STEPS.map((name) => ({ name, status: "pending" as StepStatus })),
+    }));
+
+    setDeployState({ isOpen: true, progress, overallStatus: "running", succeeded: 0, failed: 0 });
+
+    let succeeded = 0;
+    let failed = 0;
+
+    for (let ci = 0; ci < selectedClientIds.length; ci++) {
+      const clientId = selectedClientIds[ci];
+      try {
+        await deployInitiativeToClient(apiKey, clientId, form, (stepIdx, status, error) => {
+          setDeployState((prev) => {
+            if (!prev) return prev;
+            const next = { ...prev, progress: [...prev.progress] };
+            next.progress[ci] = {
+              ...next.progress[ci],
+              steps: next.progress[ci].steps.map((s, si) =>
+                si === stepIdx ? { ...s, status, error } : s
+              ),
+            };
+            return next;
+          });
+        });
+        succeeded++;
+      } catch {
+        failed++;
+      }
+
+      setDeployState((prev) => (prev ? { ...prev, succeeded, failed } : prev));
+    }
+
+    setDeployState((prev) => (prev ? { ...prev, overallStatus: "complete", succeeded, failed } : prev));
+  };
+
+  const closeDeployModal = (refresh: boolean) => {
+    setDeployState(null);
+    if (refresh) {
+      clearForm();
+      loadData();
+    }
+  };
+
+  // --- Render ---
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-3">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        <p className="text-sm text-muted-foreground">{loadingText}</p>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-4">
+        <AlertTriangle className="w-10 h-10 text-destructive" />
+        <p className="text-sm text-foreground">{loadError}</p>
+        <button
+          onClick={loadData}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="flex gap-4 min-h-[600px]">
+        {/* LEFT PANEL — Initiative Library */}
+        <div className="w-[40%] flex flex-col bg-card border border-border rounded-lg overflow-hidden">
+          <div className="p-4 border-b border-border space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-heading font-bold text-sm text-foreground">Initiative Library</h3>
+              <Badge className="bg-primary/15 text-primary">{initiatives.length}</Badge>
+            </div>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search initiatives…"
+                value={libSearch}
+                onChange={(e) => setLibSearch(e.target.value)}
+                className="w-full h-8 pl-8 pr-3 bg-surface-raised border border-border rounded-md text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+            <div className="flex gap-2">
+              <select
+                value={libStatus}
+                onChange={(e) => setLibStatus(e.target.value)}
+                className="flex-1 h-7 px-2 bg-surface-raised border border-border rounded text-[11px] text-foreground focus:outline-none"
+              >
+                <option value="All">All Status</option>
+                {STATUSES.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+              <select
+                value={libPriority}
+                onChange={(e) => setLibPriority(e.target.value)}
+                className="flex-1 h-7 px-2 bg-surface-raised border border-border rounded text-[11px] text-foreground focus:outline-none"
+              >
+                <option value="All">All Priority</option>
+                {PRIORITIES.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
+            {filteredInitiatives.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-8">No initiatives found.</p>
+            ) : (
+              filteredInitiatives.map((init) => (
+                <button
+                  key={init.id}
+                  onClick={() => loadTemplate(init)}
+                  className={`w-full text-left px-4 py-3 border-b border-border hover:bg-surface-raised transition-colors ${
+                    selectedInitiative?.id === init.id ? "bg-primary/10 border-l-2 border-l-primary" : ""
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-medium text-foreground truncate pr-2">{init.name}</span>
+                    <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0" />
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] text-muted-foreground">{init.client?.label || "—"}</span>
+                    <Badge className={STATUS_COLORS[init.status] || "bg-muted text-muted-foreground"}>
+                      {init.status}
+                    </Badge>
+                    <Badge className={PRIORITY_COLORS[init.priority] || "bg-muted text-muted-foreground"}>
+                      {init.priority}
+                    </Badge>
+                    {init.fiscal_quarter && (
+                      <span className="text-[10px] text-muted-foreground">
+                        Q{init.fiscal_quarter.quarter} {init.fiscal_quarter.year}
+                      </span>
+                    )}
+                    <span className="text-[10px] text-muted-foreground">{init.asset_count} assets</span>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* RIGHT PANEL — Initiative Builder */}
+        <div className="w-[60%] flex flex-col bg-card border border-border rounded-lg overflow-hidden">
+          <div className="p-4 border-b border-border flex items-center justify-between">
+            <div>
+              <h3 className="font-heading font-bold text-sm text-foreground">Initiative Builder</h3>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                {selectedInitiative ? `Template: ${selectedInitiative.name}` : "New Initiative"}
+              </p>
+            </div>
+            <button
+              onClick={clearForm}
+              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+            >
+              <X className="w-3 h-3" /> Clear
+            </button>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex border-b border-border">
+            {(
+              [
+                ["details", "Details"],
+                ["budget", "One-Time Budget"],
+                ["recurring", "Recurring Budget"],
+                ["clients", `Clients (${selectedClientIds.length})`],
+              ] as const
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setActiveTab(key)}
+                className={`flex-1 py-2.5 text-xs font-medium transition-colors ${
+                  activeTab === key
+                    ? "text-primary border-b-2 border-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab Content */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {activeTab === "details" && (
+              <>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Initiative Name *</label>
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(e) => updateForm({ name: e.target.value })}
+                    placeholder="Enter initiative name"
+                    className="w-full h-9 px-3 bg-surface-raised border border-border rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 flex justify-between">
+                    <span>Executive Summary</span>
+                    <span>{form.executive_summary.length}/500</span>
+                  </label>
+                  <textarea
+                    value={form.executive_summary}
+                    onChange={(e) => updateForm({ executive_summary: e.target.value.slice(0, 500) })}
+                    rows={4}
+                    placeholder="Enter executive summary"
+                    className="w-full px-3 py-2 bg-surface-raised border border-border rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Status</label>
+                    <select
+                      value={form.status}
+                      onChange={(e) => updateForm({ status: e.target.value })}
+                      className="w-full h-9 px-3 bg-surface-raised border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      {STATUSES.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Priority</label>
+                    <select
+                      value={form.priority}
+                      onChange={(e) => updateForm({ priority: e.target.value })}
+                      className="w-full h-9 px-3 bg-surface-raised border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      {PRIORITIES.map((p) => (
+                        <option key={p} value={p}>{p}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Fiscal Quarter</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      value={form.fiscal_quarter?.year || new Date().getFullYear()}
+                      onChange={(e) => {
+                        const year = parseInt(e.target.value);
+                        if (year >= 2020 && year <= 2040)
+                          updateForm({ fiscal_quarter: { ...form.fiscal_quarter!, year, quarter: form.fiscal_quarter?.quarter || 1 } });
+                      }}
+                      disabled={form.unscheduled}
+                      min={2020}
+                      max={2040}
+                      className="w-24 h-9 px-3 bg-surface-raised border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-40"
+                    />
+                    <select
+                      value={form.fiscal_quarter?.quarter || 1}
+                      onChange={(e) =>
+                        updateForm({
+                          fiscal_quarter: {
+                            ...form.fiscal_quarter!,
+                            year: form.fiscal_quarter?.year || new Date().getFullYear(),
+                            quarter: parseInt(e.target.value),
+                          },
+                        })
+                      }
+                      disabled={form.unscheduled}
+                      className="w-20 h-9 px-3 bg-surface-raised border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-40"
+                    >
+                      {[1, 2, 3, 4].map((q) => (
+                        <option key={q} value={q}>Q{q}</option>
+                      ))}
+                    </select>
+                    <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.unscheduled}
+                        onChange={(e) => updateForm({ unscheduled: e.target.checked })}
+                        className="accent-primary"
+                      />
+                      Leave unscheduled
+                    </label>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {activeTab === "budget" && (
+              <>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-medium text-foreground">One-Time Investments</h4>
+                  <button
+                    onClick={() =>
+                      updateForm({
+                        budget_line_items: [...form.budget_line_items, { label: "", amount: "", cost_type: "Fixed" }],
+                      })
+                    }
+                    className="text-xs text-primary flex items-center gap-1 hover:underline"
+                  >
+                    <Plus className="w-3 h-3" /> Add Line Item
+                  </button>
+                </div>
+                {form.budget_line_items.length === 0 && (
+                  <p className="text-xs text-muted-foreground text-center py-6">No budget line items. Click "Add Line Item" to start.</p>
+                )}
+                {form.budget_line_items.map((item, idx) => (
+                  <div key={idx} className="flex items-end gap-2">
+                    <div className="flex-1">
+                      <label className="text-[10px] text-muted-foreground mb-0.5 block">Label</label>
+                      <input
+                        type="text"
+                        value={item.label}
+                        onChange={(e) => updateBudgetItem(idx, { label: e.target.value.slice(0, 400) })}
+                        placeholder="Item label"
+                        className="w-full h-8 px-2 bg-surface-raised border border-border rounded text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                      />
+                    </div>
+                    <div className="w-28">
+                      <label className="text-[10px] text-muted-foreground mb-0.5 block">Amount ($)</label>
+                      <input
+                        type="number"
+                        value={item.amount}
+                        onChange={(e) => updateBudgetItem(idx, { amount: e.target.value })}
+                        placeholder="0.00"
+                        min="0"
+                        step="0.01"
+                        className="w-full h-8 px-2 bg-surface-raised border border-border rounded text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                      />
+                    </div>
+                    <div className="w-24">
+                      <label className="text-[10px] text-muted-foreground mb-0.5 block">Type</label>
+                      <select
+                        value={item.cost_type}
+                        onChange={(e) => updateBudgetItem(idx, { cost_type: e.target.value as "Fixed" | "PerAsset" })}
+                        className="w-full h-8 px-2 bg-surface-raised border border-border rounded text-xs text-foreground focus:outline-none"
+                      >
+                        <option value="Fixed">Fixed</option>
+                        <option value="PerAsset">Per Asset</option>
+                      </select>
+                    </div>
+                    <button
+                      onClick={() =>
+                        updateForm({ budget_line_items: form.budget_line_items.filter((_, i) => i !== idx) })
+                      }
+                      className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+                <div className="pt-2 border-t border-border flex justify-between text-xs">
+                  <span className="text-muted-foreground">Total One-Time</span>
+                  <span className="font-medium text-foreground">${budgetTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground">Amounts in USD</p>
+              </>
+            )}
+
+            {activeTab === "recurring" && (
+              <>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-medium text-foreground">Recurring Investments</h4>
+                  <button
+                    onClick={() =>
+                      updateForm({
+                        recurring_line_items: [
+                          ...form.recurring_line_items,
+                          { label: "", amount: "", cost_type: "Fixed", frequency: "Monthly" },
+                        ],
+                      })
+                    }
+                    className="text-xs text-primary flex items-center gap-1 hover:underline"
+                  >
+                    <Plus className="w-3 h-3" /> Add Recurring Item
+                  </button>
+                </div>
+                {form.recurring_line_items.length === 0 && (
+                  <p className="text-xs text-muted-foreground text-center py-6">No recurring items. Click "Add Recurring Item" to start.</p>
+                )}
+                {form.recurring_line_items.map((item, idx) => (
+                  <div key={idx} className="flex items-end gap-2">
+                    <div className="flex-1">
+                      <label className="text-[10px] text-muted-foreground mb-0.5 block">Label</label>
+                      <input
+                        type="text"
+                        value={item.label}
+                        onChange={(e) => updateRecurringItem(idx, { label: e.target.value.slice(0, 400) })}
+                        placeholder="Item label"
+                        className="w-full h-8 px-2 bg-surface-raised border border-border rounded text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                      />
+                    </div>
+                    <div className="w-24">
+                      <label className="text-[10px] text-muted-foreground mb-0.5 block">Amount ($)</label>
+                      <input
+                        type="number"
+                        value={item.amount}
+                        onChange={(e) => updateRecurringItem(idx, { amount: e.target.value })}
+                        placeholder="0.00"
+                        min="0"
+                        step="0.01"
+                        className="w-full h-8 px-2 bg-surface-raised border border-border rounded text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                      />
+                    </div>
+                    <div className="w-20">
+                      <label className="text-[10px] text-muted-foreground mb-0.5 block">Type</label>
+                      <select
+                        value={item.cost_type}
+                        onChange={(e) => updateRecurringItem(idx, { cost_type: e.target.value as "Fixed" | "PerAsset" })}
+                        className="w-full h-8 px-2 bg-surface-raised border border-border rounded text-xs text-foreground focus:outline-none"
+                      >
+                        <option value="Fixed">Fixed</option>
+                        <option value="PerAsset">Per Asset</option>
+                      </select>
+                    </div>
+                    <div className="w-24">
+                      <label className="text-[10px] text-muted-foreground mb-0.5 block">Frequency</label>
+                      <select
+                        value={item.frequency}
+                        onChange={(e) => updateRecurringItem(idx, { frequency: e.target.value as "Monthly" | "Yearly" })}
+                        className="w-full h-8 px-2 bg-surface-raised border border-border rounded text-xs text-foreground focus:outline-none"
+                      >
+                        <option value="Monthly">Monthly</option>
+                        <option value="Yearly">Yearly</option>
+                      </select>
+                    </div>
+                    <button
+                      onClick={() =>
+                        updateForm({ recurring_line_items: form.recurring_line_items.filter((_, i) => i !== idx) })
+                      }
+                      className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+                <div className="pt-2 border-t border-border space-y-1 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Monthly Total</span>
+                    <span className="font-medium text-foreground">${monthlyTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Yearly Total</span>
+                    <span className="font-medium text-foreground">${yearlyTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {activeTab === "clients" && (
+              <>
+                <p className="text-xs text-muted-foreground">Select which clients to create this initiative for</p>
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Search clients…"
+                    value={clientSearch}
+                    onChange={(e) => setClientSearch(e.target.value)}
+                    className="w-full h-8 pl-8 pr-3 bg-surface-raised border border-border rounded-md text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">{selectedClientIds.length} clients selected</span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setSelectedClientIds(clients.map((c) => c.id))}
+                      className="text-[10px] text-primary hover:underline"
+                    >
+                      Select All
+                    </button>
+                    <button
+                      onClick={() => setSelectedClientIds([])}
+                      className="text-[10px] text-muted-foreground hover:underline"
+                    >
+                      Deselect All
+                    </button>
+                  </div>
+                </div>
+                <div className="max-h-[300px] overflow-y-auto border border-border rounded-md divide-y divide-border">
+                  {filteredClients.map((client) => (
+                    <label
+                      key={client.id}
+                      className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-surface-raised transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedClientIds.includes(client.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedClientIds((prev) => [...prev, client.id]);
+                          } else {
+                            setSelectedClientIds((prev) => prev.filter((id) => id !== client.id));
+                          }
+                        }}
+                        className="accent-primary"
+                      />
+                      <span className="text-xs text-foreground flex-1">{client.name}</span>
+                      <Badge className="bg-muted text-muted-foreground">{client.lifecycle}</Badge>
+                      <span className="text-[10px] text-muted-foreground">{client.num_hardware_assets} assets</span>
+                    </label>
+                  ))}
+                  {filteredClients.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-6">No clients found.</p>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Deploy Button */}
+          <div className="p-4 border-t border-border">
+            <button
+              onClick={handleDeploy}
+              disabled={!canDeploy}
+              className="w-full h-10 bg-primary hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed text-primary-foreground font-medium rounded-md flex items-center justify-center gap-2 transition-colors"
+            >
+              <Play className="w-4 h-4" />
+              Deploy Initiative to {selectedClientIds.length} Client{selectedClientIds.length !== 1 ? "s" : ""}
+            </button>
+            {!form.name.trim() && (
+              <p className="text-[10px] text-destructive mt-1">Initiative name is required</p>
+            )}
+            {selectedClientIds.length === 0 && (
+              <p className="text-[10px] text-warning mt-1">Select at least one client in the Clients tab</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* DEPLOYMENT MODAL */}
+      {deployState?.isOpen && (
+        <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl bg-card border border-border rounded-lg shadow-2xl max-h-[85vh] flex flex-col">
+            <div className="p-5 border-b border-border">
+              <h2 className="font-heading font-bold text-lg text-foreground">
+                {deployState.overallStatus === "running" ? "Deploying Initiative…" : "Deployment Complete"}
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                {deployState.overallStatus === "running"
+                  ? `Creating initiative for ${selectedClientIds.length} client(s) — do not close this window`
+                  : `${deployState.succeeded} succeeded · ${deployState.failed} had errors`}
+              </p>
+              {deployState.overallStatus === "running" && (
+                <div className="mt-3">
+                  <Progress
+                    value={
+                      ((deployState.succeeded + deployState.failed) / deployState.progress.length) * 100
+                    }
+                    className="h-2"
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    {deployState.succeeded + deployState.failed} of {deployState.progress.length} clients complete
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {deployState.progress.map((client, ci) => {
+                const allSuccess = client.steps.every((s) => s.status === "success");
+                const hasError = client.steps.some((s) => s.status === "error");
+                return (
+                  <div
+                    key={ci}
+                    className={`border rounded-md p-3 ${
+                      allSuccess
+                        ? "border-success/30 bg-success/5"
+                        : hasError
+                        ? "border-destructive/30 bg-destructive/5"
+                        : "border-border"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-foreground">{client.clientName}</span>
+                      {allSuccess && <Badge className="bg-success/15 text-success">Complete</Badge>}
+                      {hasError && <Badge className="bg-destructive/15 text-destructive">Partially Failed</Badge>}
+                    </div>
+                    <div className="space-y-1">
+                      {client.steps.map((step, si) => (
+                        <div key={si} className="flex items-center gap-2 text-[11px]">
+                          <StepIcon status={step.status} />
+                          <span className={step.status === "error" ? "text-destructive" : "text-muted-foreground"}>
+                            Step {si + 1}: {step.name}
+                          </span>
+                          {step.error && (
+                            <span className="text-destructive ml-auto truncate max-w-[200px]" title={step.error}>
+                              {step.error}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {deployState.overallStatus === "complete" && (
+              <div className="p-4 border-t border-border flex gap-2 justify-end">
+                <button
+                  onClick={() => closeDeployModal(false)}
+                  className="px-4 py-2 border border-border text-sm rounded-md text-foreground hover:bg-surface-raised"
+                >
+                  Deploy Another
+                </button>
+                <button
+                  onClick={() => closeDeployModal(true)}
+                  className="px-4 py-2 bg-primary text-primary-foreground text-sm rounded-md hover:bg-primary/90 flex items-center gap-1.5"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" /> Done
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
