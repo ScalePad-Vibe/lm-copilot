@@ -78,8 +78,10 @@ export default function AppDetail() {
           </p>
         </div>
 
-        {/* Workspace — use real API workspace for List Opportunities */}
-        {(app.input_schema as any)?.realApi ? (
+        {/* Workspace — route to appropriate workspace */}
+        {(app.input_schema as any)?.appType === "initiative-manager" ? (
+          <InitiativeManagerWorkspace />
+        ) : (app.input_schema as any)?.realApi ? (
           <OpportunitiesWorkspace app={app} />
         ) : (
           <MiniAppWorkspace app={app} />
