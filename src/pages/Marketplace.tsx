@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
-import { POCBanner } from "@/components/layout/POCBanner";
+
 import { AppCard } from "@/components/marketplace/AppCard";
 import { CategoryChips } from "@/components/marketplace/CategoryChips";
 import { StatsRow } from "@/components/marketplace/StatsRow";
