@@ -249,6 +249,19 @@ async function updateInitiativeRecurring(
   );
 }
 
+// --- Delete helper ---
+
+export async function deleteInitiative(
+  apiKey: string,
+  initiativeId: string
+) {
+  await proxyCall(
+    apiKey,
+    `/lifecycle-manager/v1/initiatives/${initiativeId}`,
+    "DELETE"
+  );
+}
+
 // --- Deployment orchestrator ---
 
 export async function deployInitiativeToClient(
