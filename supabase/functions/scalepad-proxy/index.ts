@@ -37,7 +37,16 @@ Deno.serve(async (req) => {
       body: body ? JSON.stringify(body) : undefined,
     });
 
-    const data = await response.json();
+    // Handle 204 No Content (DELETE, some PUTs)
+    let data: Record<string, unknown> = {};
+    const contentType = response.headers.get("content-type") || "";
+    if (response.status !== 204 && contentType.includes("application/json")) {
+      try {
+        data = await response.json();
+      } catch {
+        // empty body is fine
+      }
+    }
 
     // Always return 200 to avoid supabase.functions.invoke treating non-2xx as errors
     // Include upstream status so the frontend can handle errors from the body
