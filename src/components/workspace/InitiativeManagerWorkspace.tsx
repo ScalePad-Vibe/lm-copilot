@@ -4,6 +4,7 @@ import {
   fetchAllInitiatives,
   fetchAllClients,
   deployInitiativeToClient,
+  deleteInitiative,
   type Initiative,
   type Client,
   type TemplateForm,
@@ -25,11 +26,15 @@ import {
   RefreshCw,
   AlertTriangle,
   ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "@/hooks/use-toast";
 
 // --- Constants ---
 
+const PAGE_SIZE = 8;
 const STATUSES = ["New", "Proposed", "Approved", "InProgress", "OnHold", "Declined", "Completed"];
 const PRIORITIES = ["None", "Low", "Medium", "High"];
 const DEPLOY_STEPS = [
@@ -88,6 +93,29 @@ function StepIcon({ status }: { status: StepStatus }) {
   return <Clock className="w-4 h-4 text-muted-foreground" />;
 }
 
+function Pagination({ page, totalPages, onPageChange }: { page: number; totalPages: number; onPageChange: (p: number) => void }) {
+  if (totalPages <= 1) return null;
+  return (
+    <div className="flex items-center justify-between px-3 py-2 border-t border-border">
+      <button
+        onClick={() => onPageChange(page - 1)}
+        disabled={page <= 1}
+        className="text-xs text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
+      >
+        <ChevronLeft className="w-3 h-3" /> Prev
+      </button>
+      <span className="text-[10px] text-muted-foreground">Page {page} of {totalPages}</span>
+      <button
+        onClick={() => onPageChange(page + 1)}
+        disabled={page >= totalPages}
+        className="text-xs text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
+      >
+        Next <ChevronRight className="w-3 h-3" />
+      </button>
+    </div>
+  );
+}
+
 // --- Main Component ---
 
 export function InitiativeManagerWorkspace() {
@@ -100,19 +128,26 @@ export function InitiativeManagerWorkspace() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadingText, setLoadingText] = useState("");
 
-  // Library filters
+  // Library filters & pagination
   const [libSearch, setLibSearch] = useState("");
   const [libStatus, setLibStatus] = useState("All");
   const [libPriority, setLibPriority] = useState("All");
+  const [libPage, setLibPage] = useState(1);
+
+  // Bulk delete
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Builder
   const [selectedInitiative, setSelectedInitiative] = useState<Initiative | null>(null);
   const [form, setForm] = useState<TemplateForm>(emptyForm());
   const [activeTab, setActiveTab] = useState<"details" | "budget" | "recurring" | "clients">("details");
 
-  // Client selection
+  // Client selection & pagination
   const [clientSearch, setClientSearch] = useState("");
   const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
+  const [clientPage, setClientPage] = useState(1);
 
   // Deployment
   const [deployState, setDeployState] = useState<{
@@ -159,11 +194,67 @@ export function InitiativeManagerWorkspace() {
     });
   }, [initiatives, libSearch, libStatus, libPriority]);
 
+  // Reset page when filters change
+  useEffect(() => { setLibPage(1); }, [libSearch, libStatus, libPriority]);
+
+  const libTotalPages = Math.max(1, Math.ceil(filteredInitiatives.length / PAGE_SIZE));
+  const pagedInitiatives = filteredInitiatives.slice((libPage - 1) * PAGE_SIZE, libPage * PAGE_SIZE);
+
   // --- Filtered clients ---
   const filteredClients = useMemo(() => {
     if (!clientSearch) return clients;
     return clients.filter((c) => c.name.toLowerCase().includes(clientSearch.toLowerCase()));
   }, [clients, clientSearch]);
+
+  useEffect(() => { setClientPage(1); }, [clientSearch]);
+
+  const clientTotalPages = Math.max(1, Math.ceil(filteredClients.length / PAGE_SIZE));
+  const pagedClients = filteredClients.slice((clientPage - 1) * PAGE_SIZE, clientPage * PAGE_SIZE);
+
+  // --- Bulk delete ---
+  const allPageChecked = pagedInitiatives.length > 0 && pagedInitiatives.every((i) => checkedIds.has(i.id));
+
+  const togglePageAll = () => {
+    setCheckedIds((prev) => {
+      const next = new Set(prev);
+      if (allPageChecked) {
+        pagedInitiatives.forEach((i) => next.delete(i.id));
+      } else {
+        pagedInitiatives.forEach((i) => next.add(i.id));
+      }
+      return next;
+    });
+  };
+
+  const toggleCheck = (id: string) => {
+    setCheckedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const selectedForDelete = initiatives.filter((i) => checkedIds.has(i.id));
+
+  const handleBulkDelete = async () => {
+    setDeleting(true);
+    let deleted = 0;
+    for (const init of selectedForDelete) {
+      try {
+        await deleteInitiative(apiKey, init.id);
+        deleted++;
+      } catch (e) {
+        toast({ title: `Failed to delete "${init.name}"`, description: e instanceof Error ? e.message : "Unknown error", variant: "destructive" });
+      }
+    }
+    if (deleted > 0) {
+      toast({ title: `${deleted} initiative(s) deleted` });
+    }
+    setCheckedIds(new Set());
+    setShowDeleteModal(false);
+    setDeleting(false);
+    loadData();
+  };
 
   // --- Load template from initiative ---
   const loadTemplate = (init: Initiative) => {
@@ -321,8 +412,18 @@ export function InitiativeManagerWorkspace() {
         <div className="w-[40%] flex flex-col bg-card border border-border rounded-lg overflow-hidden">
           <div className="p-4 border-b border-border space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="font-heading font-bold text-sm text-foreground">Initiative Library</h3>
-              <Badge className="bg-primary/15 text-primary">{initiatives.length}</Badge>
+              <div className="flex items-center gap-2">
+                <h3 className="font-heading font-bold text-sm text-foreground">Initiative Library</h3>
+                <Badge className="bg-primary/15 text-primary">{initiatives.length}</Badge>
+              </div>
+              {checkedIds.size > 0 && (
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="text-xs bg-destructive/15 text-destructive hover:bg-destructive/25 px-2.5 py-1 rounded-md font-medium flex items-center gap-1"
+                >
+                  <Trash2 className="w-3 h-3" /> Delete Selected ({checkedIds.size})
+                </button>
+              )}
             </div>
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
@@ -358,41 +459,64 @@ export function InitiativeManagerWorkspace() {
             </div>
           </div>
 
+          {/* Header row with select-all checkbox */}
+          <div className="flex items-center gap-2 px-4 py-1.5 border-b border-border bg-surface-raised">
+            <Checkbox
+              checked={allPageChecked}
+              onCheckedChange={togglePageAll}
+              className="h-3.5 w-3.5"
+            />
+            <span className="text-[10px] text-muted-foreground">Select all on page</span>
+          </div>
+
           <div className="flex-1 overflow-y-auto">
-            {filteredInitiatives.length === 0 ? (
+            {pagedInitiatives.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-8">No initiatives found.</p>
             ) : (
-              filteredInitiatives.map((init) => (
-                <button
+              pagedInitiatives.map((init) => (
+                <div
                   key={init.id}
-                  onClick={() => loadTemplate(init)}
-                  className={`w-full text-left px-4 py-3 border-b border-border hover:bg-surface-raised transition-colors ${
+                  className={`flex items-start gap-2 px-4 py-3 border-b border-border hover:bg-surface-raised transition-colors ${
                     selectedInitiative?.id === init.id ? "bg-primary/10 border-l-2 border-l-primary" : ""
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium text-foreground truncate pr-2">{init.name}</span>
-                    <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0" />
+                  <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={checkedIds.has(init.id)}
+                      onCheckedChange={() => toggleCheck(init.id)}
+                      className="h-3.5 w-3.5"
+                    />
                   </div>
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-[10px] text-muted-foreground">{init.client?.label || "—"}</span>
-                    <Badge className={STATUS_COLORS[init.status] || "bg-muted text-muted-foreground"}>
-                      {init.status}
-                    </Badge>
-                    <Badge className={PRIORITY_COLORS[init.priority] || "bg-muted text-muted-foreground"}>
-                      {init.priority}
-                    </Badge>
-                    {init.fiscal_quarter && (
-                      <span className="text-[10px] text-muted-foreground">
-                        Q{init.fiscal_quarter.quarter} {init.fiscal_quarter.year}
-                      </span>
-                    )}
-                    <span className="text-[10px] text-muted-foreground">{init.asset_count} assets</span>
-                  </div>
-                </button>
+                  <button
+                    onClick={() => loadTemplate(init)}
+                    className="flex-1 text-left"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-foreground truncate pr-2">{init.name}</span>
+                      <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0" />
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] text-muted-foreground">{init.client?.label || "—"}</span>
+                      <Badge className={STATUS_COLORS[init.status] || "bg-muted text-muted-foreground"}>
+                        {init.status}
+                      </Badge>
+                      <Badge className={PRIORITY_COLORS[init.priority] || "bg-muted text-muted-foreground"}>
+                        {init.priority}
+                      </Badge>
+                      {init.fiscal_quarter && (
+                        <span className="text-[10px] text-muted-foreground">
+                          Q{init.fiscal_quarter.quarter} {init.fiscal_quarter.year}
+                        </span>
+                      )}
+                      <span className="text-[10px] text-muted-foreground">{init.asset_count} assets</span>
+                    </div>
+                  </button>
+                </div>
               ))
             )}
           </div>
+
+          <Pagination page={libPage} totalPages={libTotalPages} onPageChange={setLibPage} />
         </div>
 
         {/* RIGHT PANEL — Initiative Builder */}
@@ -728,8 +852,8 @@ export function InitiativeManagerWorkspace() {
                     </button>
                   </div>
                 </div>
-                <div className="max-h-[300px] overflow-y-auto border border-border rounded-md divide-y divide-border">
-                  {filteredClients.map((client) => (
+                <div className="border border-border rounded-md divide-y divide-border">
+                  {pagedClients.map((client) => (
                     <label
                       key={client.id}
                       className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-surface-raised transition-colors"
@@ -751,10 +875,11 @@ export function InitiativeManagerWorkspace() {
                       <span className="text-[10px] text-muted-foreground">{client.num_hardware_assets} assets</span>
                     </label>
                   ))}
-                  {filteredClients.length === 0 && (
+                  {pagedClients.length === 0 && (
                     <p className="text-xs text-muted-foreground text-center py-6">No clients found.</p>
                   )}
                 </div>
+                <Pagination page={clientPage} totalPages={clientTotalPages} onPageChange={setClientPage} />
               </>
             )}
           </div>
@@ -863,6 +988,46 @@ export function InitiativeManagerWorkspace() {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* DELETE CONFIRMATION MODAL */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-card border border-border rounded-lg shadow-2xl">
+            <div className="p-5 border-b border-border">
+              <h2 className="font-heading font-bold text-base text-foreground">
+                Delete {selectedForDelete.length} Initiative{selectedForDelete.length !== 1 ? "s" : ""}?
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                This will permanently delete the following initiatives and cannot be undone:
+              </p>
+            </div>
+            <div className="p-5 max-h-48 overflow-y-auto">
+              <ul className="list-disc list-inside space-y-1">
+                {selectedForDelete.map((init) => (
+                  <li key={init.id} className="text-xs text-foreground">{init.name}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="p-4 border-t border-border flex gap-2 justify-end">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleting}
+                className="px-4 py-2 border border-border text-sm rounded-md text-foreground hover:bg-surface-raised disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                disabled={deleting}
+                className="px-4 py-2 bg-destructive text-destructive-foreground text-sm rounded-md hover:bg-destructive/90 flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {deleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                Delete Permanently
+              </button>
+            </div>
           </div>
         </div>
       )}

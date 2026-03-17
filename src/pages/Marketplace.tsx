@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
-import { POCBanner } from "@/components/layout/POCBanner";
+
 import { AppCard } from "@/components/marketplace/AppCard";
 import { CategoryChips } from "@/components/marketplace/CategoryChips";
 import { StatsRow } from "@/components/marketplace/StatsRow";
@@ -30,7 +30,7 @@ export default function Marketplace() {
       <Sidebar selectedCategory={category} onCategoryChange={setCategory} apps={apps} />
 
       <div className="ml-60 flex-1 flex flex-col min-h-screen">
-        <POCBanner />
+        
         <Topbar
           title="Marketplace"
           appCount={filtered.length}

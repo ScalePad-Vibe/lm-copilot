@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { MiniAppWorkspace } from "@/components/workspace/MiniAppWorkspace";
 import { OpportunitiesWorkspace } from "@/components/workspace/OpportunitiesWorkspace";
 import { InitiativeManagerWorkspace } from "@/components/workspace/InitiativeManagerWorkspace";
-import { POCBanner } from "@/components/layout/POCBanner";
+
 import { ArrowLeft } from "lucide-react";
 
 const statusColors: Record<string, string> = {
@@ -41,7 +41,7 @@ export default function AppDetail() {
 
   return (
     <div className="min-h-screen bg-background">
-      <POCBanner />
+      
       <div className="max-w-4xl mx-auto p-6 space-y-6">
         {/* Back */}
         <button
