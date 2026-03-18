@@ -60,7 +60,7 @@ export default function SettingsPage() {
       <Sidebar selectedCategory={category} onCategoryChange={setCategory} apps={apps} />
 
       <div className="ml-60 flex-1 flex flex-col min-h-screen">
-        <POCBanner />
+        
         <header className="h-16 border-b border-border bg-surface flex items-center px-6 shrink-0">
           <h2 className="text-lg font-heading font-bold">Settings</h2>
         </header>
