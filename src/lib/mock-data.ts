@@ -41,4 +41,24 @@ export const SEED_APPS: MarketplaceApp[] = [
     },
     created_at: "2025-03-12T10:00:00Z",
   },
+  {
+    id: "app-009",
+    name: "Goal Manager",
+    description:
+      "View, edit, and deploy goals across multiple clients using the ScalePad Lifecycle Manager API.",
+    how_it_works:
+      "Fetches your goals and client list from the Lifecycle Manager API, lets you build or clone a goal template (title, description, status, period), select target clients, and deploys the goal to each client in sequence with real-time progress tracking.",
+    category: "Planning",
+    icon: "🎯",
+    status: "active",
+    version: "1.0.0",
+    author: "ScalePad Team",
+    api_endpoint: "/lifecycle-manager/v1/goals",
+    input_schema: {
+      realApi: true,
+      appType: "goal-manager",
+      fields: [],
+    },
+    created_at: "2025-03-15T10:00:00Z",
+  },
 ];
