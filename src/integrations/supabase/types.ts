@@ -14,7 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      app_comments: {
+        Row: {
+          app_id: string
+          content: string
+          created_at: string
+          id: string
+          user_hash: string
+        }
+        Insert: {
+          app_id: string
+          content: string
+          created_at?: string
+          id?: string
+          user_hash: string
+        }
+        Update: {
+          app_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          user_hash?: string
+        }
+        Relationships: []
+      }
+      app_ratings: {
+        Row: {
+          app_id: string
+          created_at: string
+          id: string
+          rating: number
+          updated_at: string
+          user_hash: string
+        }
+        Insert: {
+          app_id: string
+          created_at?: string
+          id?: string
+          rating: number
+          updated_at?: string
+          user_hash: string
+        }
+        Update: {
+          app_id?: string
+          created_at?: string
+          id?: string
+          rating?: number
+          updated_at?: string
+          user_hash?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

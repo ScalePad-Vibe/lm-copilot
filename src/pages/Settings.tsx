@@ -3,7 +3,7 @@ import { useAppStore } from "@/context/AppStoreContext";
 import { maskApiKey } from "@/lib/scalepad-api";
 import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { POCBanner } from "@/components/layout/POCBanner";
+
 import { useState } from "react";
 import { toast } from "sonner";
 import { Download, Upload, RotateCcw } from "lucide-react";
@@ -60,7 +60,7 @@ export default function SettingsPage() {
       <Sidebar selectedCategory={category} onCategoryChange={setCategory} apps={apps} />
 
       <div className="ml-60 flex-1 flex flex-col min-h-screen">
-        <POCBanner />
+        
         <header className="h-16 border-b border-border bg-surface flex items-center px-6 shrink-0">
           <h2 className="text-lg font-heading font-bold">Settings</h2>
         </header>

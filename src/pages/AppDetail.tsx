@@ -6,6 +6,7 @@ import { MiniAppWorkspace } from "@/components/workspace/MiniAppWorkspace";
 import { OpportunitiesWorkspace } from "@/components/workspace/OpportunitiesWorkspace";
 import { InitiativeManagerWorkspace } from "@/components/workspace/InitiativeManagerWorkspace";
 import { GoalManagerWorkspace } from "@/components/workspace/GoalManagerWorkspace";
+import { AppRatingsComments } from "@/components/marketplace/AppRatingsComments";
 
 import { ArrowLeft } from "lucide-react";
 
@@ -89,6 +90,9 @@ export default function AppDetail() {
         ) : (
           <MiniAppWorkspace app={app} />
         )}
+
+        {/* Ratings & Comments */}
+        <AppRatingsComments appId={app.id} />
       </div>
     </div>
   );
