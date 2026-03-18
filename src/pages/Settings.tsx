@@ -3,7 +3,7 @@ import { useAppStore } from "@/context/AppStoreContext";
 import { maskApiKey } from "@/lib/scalepad-api";
 import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { POCBanner } from "@/components/layout/POCBanner";
+
 import { useState } from "react";
 import { toast } from "sonner";
 import { Download, Upload, RotateCcw } from "lucide-react";
