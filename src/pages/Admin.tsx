@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAppStore } from "@/context/AppStoreContext";
 import { MarketplaceApp } from "@/lib/constants";
-import { POCBanner } from "@/components/layout/POCBanner";
+
 import { Sidebar } from "@/components/layout/Sidebar";
 import { AppFormModal } from "@/components/admin/AppFormModal";
 import { DeleteConfirmModal } from "@/components/admin/DeleteConfirmModal";
