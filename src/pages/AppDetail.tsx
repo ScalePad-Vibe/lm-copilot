@@ -82,6 +82,8 @@ export default function AppDetail() {
         {/* Workspace — route to appropriate workspace */}
         {(app.input_schema as any)?.appType === "initiative-manager" ? (
           <InitiativeManagerWorkspace />
+        ) : (app.input_schema as any)?.appType === "goal-manager" ? (
+          <GoalManagerWorkspace />
         ) : (app.input_schema as any)?.realApi ? (
           <OpportunitiesWorkspace app={app} />
         ) : (
