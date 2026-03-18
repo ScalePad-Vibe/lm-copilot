@@ -33,6 +33,3 @@ export const ACTION_MODES = [
   { value: "dry_run", label: "Dry run preview" },
   { value: "export", label: "Export to CSV" },
 ] as const;
-
-/** Hardcoded admin password for POC — replace with Supabase Auth */
-export const POC_ADMIN_PASSWORD = "admin123";

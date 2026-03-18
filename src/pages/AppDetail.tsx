@@ -90,6 +90,9 @@ export default function AppDetail() {
         ) : (
           <MiniAppWorkspace app={app} />
         )}
+
+        {/* Ratings & Comments */}
+        <AppRatingsComments appId={app.id} />
       </div>
     </div>
   );
