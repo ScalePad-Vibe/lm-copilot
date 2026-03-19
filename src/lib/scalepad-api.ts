@@ -8,6 +8,14 @@
  *   - src/lib/goal-api.ts        — goals CRUD + deploy
  */
 
+/** Shape returned by a ScalePad write operation (POC / legacy). */
+export interface ApiResponse {
+  success: boolean;
+  affected: number;
+  timestamp: string;
+  error?: string;
+}
+
 /**
  * Mask an API key for safe display.
  * Shows the first 4 and last 4 characters with dots in between.
