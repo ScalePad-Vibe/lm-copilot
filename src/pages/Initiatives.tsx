@@ -1,6 +1,6 @@
 import { Shell } from "@/components/layout/Shell";
 import { ApiKeyGate } from "@/components/layout/ApiKeyGate";
-import { InitiativeManagerWorkspace } from "@/components/workspace/InitiativeManagerWorkspace";
+import { InitiativesManager } from "@/components/workspace/InitiativesManager";
 
 export default function Initiatives() {
   return (
