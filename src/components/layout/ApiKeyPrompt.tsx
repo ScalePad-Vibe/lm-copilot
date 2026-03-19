@@ -82,7 +82,7 @@ export function ApiKeyPrompt({ onDismiss }: ApiKeyPromptProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-40 ml-64 flex items-center justify-center bg-background animate-fade-in">
+    <div className="h-full flex items-center justify-center animate-fade-in">
       {card}
     </div>
   );
