@@ -3,9 +3,10 @@ import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/context/AuthContext";
-import { AppStoreProvider } from "@/context/AppStoreContext";
-import Marketplace from "./pages/Marketplace";
-import AppDetail from "./pages/AppDetail";
+import Home from "./pages/Home";
+import Initiatives from "./pages/Initiatives";
+import Goals from "./pages/Goals";
+import Opportunities from "./pages/Opportunities";
 import SettingsPage from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -16,17 +17,19 @@ const App = () => (
     <TooltipProvider>
       <Sonner />
       <AuthProvider>
-        <AppStoreProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/"                   element={<Navigate to="/marketplace" replace />} />
-              <Route path="/marketplace"        element={<Marketplace />} />
-              <Route path="/marketplace/:appId" element={<AppDetail />} />
-              <Route path="/settings"           element={<SettingsPage />} />
-              <Route path="*"                   element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </AppStoreProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/"               element={<Home />} />
+            <Route path="/initiatives"    element={<Initiatives />} />
+            <Route path="/goals"          element={<Goals />} />
+            <Route path="/opportunities"  element={<Opportunities />} />
+            <Route path="/settings"       element={<SettingsPage />} />
+            {/* Legacy redirects */}
+            <Route path="/marketplace"    element={<Navigate to="/" replace />} />
+            <Route path="/marketplace/*"  element={<Navigate to="/" replace />} />
+            <Route path="*"              element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
