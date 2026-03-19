@@ -43,20 +43,20 @@ const DEPLOY_STEPS = [
 ];
 
 const STATUS_COLORS: Record<string, string> = {
-  New: "bg-primary/15 text-primary",
-  Proposed: "bg-purple-500/15 text-purple-400",
-  Approved: "bg-success/15 text-success",
+  New:        "bg-primary/15 text-primary",
+  Proposed:   "bg-purple-500/15 text-purple-400",
+  Approved:   "bg-success/15 text-success",
   InProgress: "bg-cyan-500/15 text-cyan-400",
-  OnHold: "bg-warning/15 text-warning",
-  Declined: "bg-destructive/15 text-destructive",
-  Completed: "bg-muted text-muted-foreground",
+  OnHold:     "bg-warning/15 text-warning",
+  Declined:   "bg-destructive/15 text-destructive",
+  Completed:  "bg-muted text-muted-foreground",
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
-  High: "bg-destructive/15 text-destructive",
+  High:   "bg-destructive/15 text-destructive",
   Medium: "bg-warning/15 text-warning",
-  Low: "bg-primary/15 text-primary",
-  None: "bg-muted text-muted-foreground",
+  Low:    "bg-primary/15 text-primary",
+  None:   "bg-muted text-muted-foreground",
 };
 
 function emptyForm(): TemplateForm {
@@ -72,8 +72,12 @@ function emptyForm(): TemplateForm {
   };
 }
 
-// --- Main Component ---
+// --- Shared input / select style tokens ---
+const inputCls = "w-full h-9 px-3 bg-surface-container border-none rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary";
+const selectCls = "w-full h-9 px-3 bg-surface-container border-none rounded-md text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary";
+const smallSelectCls = "flex-1 h-7 px-2 bg-surface-container border-none rounded text-[11px] text-foreground focus:outline-none";
 
+// --- Main Component ---
 
 export function InitiativeManagerWorkspace() {
   const { apiKey } = useAuth();
@@ -122,10 +126,7 @@ export function InitiativeManagerWorkspace() {
     setLoadingText("Loading initiatives...");
     try {
       const [initData, clientData] = await Promise.all([
-        fetchAllInitiatives(apiKey).then((d) => {
-          setLoadingText("Loading clients...");
-          return d;
-        }),
+        fetchAllInitiatives(apiKey).then((d) => { setLoadingText("Loading clients..."); return d; }),
         fetchAllClients(apiKey),
       ]);
       setInitiatives(initData);
@@ -137,21 +138,16 @@ export function InitiativeManagerWorkspace() {
     }
   }, [apiKey]);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  useEffect(() => { loadData(); }, [loadData]);
 
   // --- Filtered initiatives ---
-  const filteredInitiatives = useMemo(() => {
-    return initiatives.filter((i) => {
-      if (libStatus !== "All" && i.status !== libStatus) return false;
-      if (libPriority !== "All" && i.priority !== libPriority) return false;
-      if (libSearch && !i.name.toLowerCase().includes(libSearch.toLowerCase())) return false;
-      return true;
-    });
-  }, [initiatives, libSearch, libStatus, libPriority]);
+  const filteredInitiatives = useMemo(() => initiatives.filter((i) => {
+    if (libStatus !== "All" && i.status !== libStatus) return false;
+    if (libPriority !== "All" && i.priority !== libPriority) return false;
+    if (libSearch && !i.name.toLowerCase().includes(libSearch.toLowerCase())) return false;
+    return true;
+  }), [initiatives, libSearch, libStatus, libPriority]);
 
-  // Reset page when filters change
   useEffect(() => { setLibPage(1); }, [libSearch, libStatus, libPriority]);
 
   const libTotalPages = Math.max(1, Math.ceil(filteredInitiatives.length / PAGE_SIZE));
@@ -174,11 +170,8 @@ export function InitiativeManagerWorkspace() {
   const togglePageAll = () => {
     setCheckedIds((prev) => {
       const next = new Set(prev);
-      if (allPageChecked) {
-        pagedInitiatives.forEach((i) => next.delete(i.id));
-      } else {
-        pagedInitiatives.forEach((i) => next.add(i.id));
-      }
+      if (allPageChecked) pagedInitiatives.forEach((i) => next.delete(i.id));
+      else pagedInitiatives.forEach((i) => next.add(i.id));
       return next;
     });
   };
@@ -204,16 +197,14 @@ export function InitiativeManagerWorkspace() {
         toast({ title: `Failed to delete "${init.name}"`, description: e instanceof Error ? e.message : "Unknown error", variant: "destructive" });
       }
     }
-    if (deleted > 0) {
-      toast({ title: `${deleted} initiative(s) deleted` });
-    }
+    if (deleted > 0) toast({ title: `${deleted} initiative(s) deleted` });
     setCheckedIds(new Set());
     setShowDeleteModal(false);
     setDeleting(false);
     loadData();
   };
 
-  // --- Load template from initiative ---
+  // --- Load template ---
   const loadTemplate = (init: Initiative) => {
     setSelectedInitiative(init);
     setForm({
@@ -241,50 +232,20 @@ export function InitiativeManagerWorkspace() {
     setActiveTab("details");
   };
 
-  const clearForm = () => {
-    setSelectedInitiative(null);
-    setForm(emptyForm());
-    setSelectedClientIds([]);
-  };
+  const clearForm = () => { setSelectedInitiative(null); setForm(emptyForm()); setSelectedClientIds([]); };
 
   // --- Form updaters ---
   const updateForm = (patch: Partial<TemplateForm>) => setForm((f) => ({ ...f, ...patch }));
-
   const updateBudgetItem = (idx: number, patch: Partial<BudgetLineItemForm>) =>
-    setForm((f) => ({
-      ...f,
-      budget_line_items: f.budget_line_items.map((item, i) => (i === idx ? { ...item, ...patch } : item)),
-    }));
-
+    setForm((f) => ({ ...f, budget_line_items: f.budget_line_items.map((item, i) => i === idx ? { ...item, ...patch } : item) }));
   const updateRecurringItem = (idx: number, patch: Partial<RecurringLineItemForm>) =>
-    setForm((f) => ({
-      ...f,
-      recurring_line_items: f.recurring_line_items.map((item, i) => (i === idx ? { ...item, ...patch } : item)),
-    }));
+    setForm((f) => ({ ...f, recurring_line_items: f.recurring_line_items.map((item, i) => i === idx ? { ...item, ...patch } : item) }));
 
   // --- Budget totals ---
-  const budgetTotal = useMemo(
-    () => form.budget_line_items.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0),
-    [form.budget_line_items]
-  );
+  const budgetTotal  = useMemo(() => form.budget_line_items.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0), [form.budget_line_items]);
+  const monthlyTotal = useMemo(() => form.recurring_line_items.filter((i) => i.frequency === "Monthly").reduce((s, i) => s + (parseFloat(i.amount) || 0), 0), [form.recurring_line_items]);
+  const yearlyTotal  = useMemo(() => form.recurring_line_items.filter((i) => i.frequency === "Yearly").reduce((s, i) => s + (parseFloat(i.amount) || 0), 0), [form.recurring_line_items]);
 
-  const monthlyTotal = useMemo(
-    () =>
-      form.recurring_line_items
-        .filter((i) => i.frequency === "Monthly")
-        .reduce((s, i) => s + (parseFloat(i.amount) || 0), 0),
-    [form.recurring_line_items]
-  );
-
-  const yearlyTotal = useMemo(
-    () =>
-      form.recurring_line_items
-        .filter((i) => i.frequency === "Yearly")
-        .reduce((s, i) => s + (parseFloat(i.amount) || 0), 0),
-    [form.recurring_line_items]
-  );
-
-  // --- Validation ---
   const canDeploy = form.name.trim() !== "" && selectedClientIds.length > 0;
 
   // --- Deploy ---
@@ -295,12 +256,8 @@ export function InitiativeManagerWorkspace() {
       clientName: clientMap.get(cid) || cid,
       steps: DEPLOY_STEPS.map((name) => ({ name, status: "pending" as StepStatus })),
     }));
-
     setDeployState({ isOpen: true, progress, overallStatus: "running", succeeded: 0, failed: 0 });
-
-    let succeeded = 0;
-    let failed = 0;
-
+    let succeeded = 0, failed = 0;
     for (let ci = 0; ci < selectedClientIds.length; ci++) {
       const clientId = selectedClientIds[ci];
       try {
@@ -308,36 +265,23 @@ export function InitiativeManagerWorkspace() {
           setDeployState((prev) => {
             if (!prev) return prev;
             const next = { ...prev, progress: [...prev.progress] };
-            next.progress[ci] = {
-              ...next.progress[ci],
-              steps: next.progress[ci].steps.map((s, si) =>
-                si === stepIdx ? { ...s, status, error } : s
-              ),
-            };
+            next.progress[ci] = { ...next.progress[ci], steps: next.progress[ci].steps.map((s, si) => si === stepIdx ? { ...s, status, error } : s) };
             return next;
           });
         });
         succeeded++;
-      } catch {
-        failed++;
-      }
-
+      } catch { failed++; }
       setDeployState((prev) => (prev ? { ...prev, succeeded, failed } : prev));
     }
-
     setDeployState((prev) => (prev ? { ...prev, overallStatus: "complete", succeeded, failed } : prev));
   };
 
   const closeDeployModal = (refresh: boolean) => {
     setDeployState(null);
-    if (refresh) {
-      clearForm();
-      loadData();
-    }
+    if (refresh) { clearForm(); loadData(); }
   };
 
   // --- Render ---
-
   if (loading) return <WorkspaceLoader message={loadingText} />;
   if (loadError) return <WorkspaceError message={loadError} onRetry={loadData} />;
 
@@ -345,11 +289,12 @@ export function InitiativeManagerWorkspace() {
     <>
       <div className="flex gap-4 min-h-[600px]">
 
-        <div className="w-[40%] flex flex-col bg-card border border-border rounded-lg overflow-hidden">
-          <div className="p-4 border-b border-border space-y-3">
+        {/* LEFT PANEL — Library */}
+        <div className="w-[40%] flex flex-col bg-surface border border-border/15 rounded-xl overflow-hidden">
+          <div className="px-4 pt-4 pb-3 border-b border-border/15 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <h3 className="font-heading font-bold text-sm text-foreground">Initiative Library</h3>
+                <p className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Initiative Library</p>
                 <Badge className="bg-primary/15 text-primary">{initiatives.length}</Badge>
               </div>
               {checkedIds.size > 0 && (
@@ -357,7 +302,7 @@ export function InitiativeManagerWorkspace() {
                   onClick={() => setShowDeleteModal(true)}
                   className="text-xs bg-destructive/15 text-destructive hover:bg-destructive/25 px-2.5 py-1 rounded-md font-medium flex items-center gap-1"
                 >
-                  <Trash2 className="w-3 h-3" /> Delete Selected ({checkedIds.size})
+                  <Trash2 className="w-3 h-3" /> Delete ({checkedIds.size})
                 </button>
               )}
             </div>
@@ -368,40 +313,24 @@ export function InitiativeManagerWorkspace() {
                 placeholder="Search initiatives…"
                 value={libSearch}
                 onChange={(e) => setLibSearch(e.target.value)}
-                className="w-full h-8 pl-8 pr-3 bg-surface-raised border border-border rounded-md text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full h-8 pl-8 pr-3 bg-surface-container border-none rounded-md text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
             <div className="flex gap-2">
-              <select
-                value={libStatus}
-                onChange={(e) => setLibStatus(e.target.value)}
-                className="flex-1 h-7 px-2 bg-surface-raised border border-border rounded text-[11px] text-foreground focus:outline-none"
-              >
+              <select value={libStatus} onChange={(e) => setLibStatus(e.target.value)} className={smallSelectCls}>
                 <option value="All">All Status</option>
-                {STATUSES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
+                {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
-              <select
-                value={libPriority}
-                onChange={(e) => setLibPriority(e.target.value)}
-                className="flex-1 h-7 px-2 bg-surface-raised border border-border rounded text-[11px] text-foreground focus:outline-none"
-              >
+              <select value={libPriority} onChange={(e) => setLibPriority(e.target.value)} className={smallSelectCls}>
                 <option value="All">All Priority</option>
-                {PRIORITIES.map((p) => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
+                {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
             </div>
           </div>
 
-          {/* Header row with select-all checkbox */}
-          <div className="flex items-center gap-2 px-4 py-1.5 border-b border-border bg-surface-raised">
-            <Checkbox
-              checked={allPageChecked}
-              onCheckedChange={togglePageAll}
-              className="h-3.5 w-3.5"
-            />
+          {/* Select-all row */}
+          <div className="flex items-center gap-2 px-4 py-1.5 border-b border-border/15 bg-surface-container/50">
+            <Checkbox checked={allPageChecked} onCheckedChange={togglePageAll} className="h-3.5 w-3.5" />
             <span className="text-[10px] text-muted-foreground">Select all on page</span>
           </div>
 
@@ -412,37 +341,28 @@ export function InitiativeManagerWorkspace() {
               pagedInitiatives.map((init) => (
                 <div
                   key={init.id}
-                  className={`flex items-start gap-2 px-4 py-3 border-b border-border hover:bg-surface-raised transition-colors ${
-                    selectedInitiative?.id === init.id ? "bg-primary/10 border-l-2 border-l-primary" : ""
+                  className={`group flex items-start gap-2 px-4 py-3 border-b border-border/10 hover:bg-surface-container transition-colors ${
+                    selectedInitiative?.id === init.id ? "bg-primary/8 border-l-2 border-l-primary" : ""
                   }`}
                 >
                   <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>
-                    <Checkbox
-                      checked={checkedIds.has(init.id)}
-                      onCheckedChange={() => toggleCheck(init.id)}
-                      className="h-3.5 w-3.5"
-                    />
+                    <Checkbox checked={checkedIds.has(init.id)} onCheckedChange={() => toggleCheck(init.id)} className="h-3.5 w-3.5" />
                   </div>
-                  <button
-                    onClick={() => loadTemplate(init)}
-                    className="flex-1 text-left"
-                  >
+                  <button onClick={() => loadTemplate(init)} className="flex-1 text-left min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-medium text-foreground truncate pr-2">{init.name}</span>
-                      <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0" />
+                      <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-[10px] text-muted-foreground">{init.client?.label || "—"}</span>
-                      <Badge className={STATUS_COLORS[init.status] || "bg-muted text-muted-foreground"}>
+                      <Badge className={`rounded-full text-[10px] font-bold uppercase tracking-tight ${STATUS_COLORS[init.status] || "bg-muted text-muted-foreground"}`}>
                         {init.status}
                       </Badge>
-                      <Badge className={PRIORITY_COLORS[init.priority] || "bg-muted text-muted-foreground"}>
+                      <Badge className={`rounded-full text-[10px] font-bold uppercase tracking-tight ${PRIORITY_COLORS[init.priority] || "bg-muted text-muted-foreground"}`}>
                         {init.priority}
                       </Badge>
                       {init.fiscal_quarter && (
-                        <span className="text-[10px] text-muted-foreground">
-                          Q{init.fiscal_quarter.quarter} {init.fiscal_quarter.year}
-                        </span>
+                        <span className="text-[10px] text-muted-foreground">Q{init.fiscal_quarter.quarter} {init.fiscal_quarter.year}</span>
                       )}
                       <span className="text-[10px] text-muted-foreground">{init.asset_count} assets</span>
                     </div>
@@ -455,45 +375,36 @@ export function InitiativeManagerWorkspace() {
           <Pagination page={libPage} totalPages={libTotalPages} onPageChange={setLibPage} />
         </div>
 
-        {/* RIGHT PANEL — Initiative Builder */}
-        <div className="w-[60%] flex flex-col bg-card border border-border rounded-lg overflow-hidden">
-          <div className="p-4 border-b border-border flex items-center justify-between">
+        {/* RIGHT PANEL — Builder */}
+        <div className="w-[60%] flex flex-col bg-surface border border-border/15 rounded-xl overflow-hidden">
+          <div className="px-4 pt-4 pb-3 border-b border-border/15 flex items-center justify-between">
             <div>
-              <h3 className="font-heading font-bold text-sm text-foreground">Initiative Builder</h3>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
-                {selectedInitiative ? `Template: ${selectedInitiative.name}` : "New Initiative"}
+              <p className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Initiative Builder</p>
+              <p className="text-xs text-foreground mt-0.5 font-medium">
+                {selectedInitiative ? selectedInitiative.name : "New Initiative"}
               </p>
             </div>
-            <button
-              onClick={clearForm}
-              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
-            >
+            <button onClick={clearForm} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
               <X className="w-3 h-3" /> Clear
             </button>
           </div>
 
           {/* Tabs */}
-          <div className="flex border-b border-border">
-            {(
-              [
-                ["details", "Details"],
-                ["budget", "One-Time Budget"],
-                ["recurring", "Recurring Budget"],
-                ["clients", `Clients (${selectedClientIds.length})`],
-              ] as const
-            ).map(([key, label]) => (
-              <button
-                key={key}
-                onClick={() => setActiveTab(key)}
-                className={`flex-1 py-2.5 text-xs font-medium transition-colors ${
-                  activeTab === key
-                    ? "text-primary border-b-2 border-primary"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+          <div className="flex border-b border-border/15">
+            {(["details", "budget", "recurring", "clients"] as const).map((key) => {
+              const labels: Record<string, string> = { details: "Details", budget: "One-Time Budget", recurring: "Recurring", clients: `Clients (${selectedClientIds.length})` };
+              return (
+                <button
+                  key={key}
+                  onClick={() => setActiveTab(key)}
+                  className={`flex-1 py-2.5 text-xs font-medium transition-colors ${
+                    activeTab === key ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {labels[key]}
+                </button>
+              );
+            })}
           </div>
 
           {/* Tab Content */}
@@ -501,95 +412,57 @@ export function InitiativeManagerWorkspace() {
             {activeTab === "details" && (
               <>
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Initiative Name *</label>
-                  <input
-                    type="text"
-                    value={form.name}
-                    onChange={(e) => updateForm({ name: e.target.value })}
-                    placeholder="Enter initiative name"
-                    className="w-full h-9 px-3 bg-surface-raised border border-border rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground mb-1.5 block">Initiative Name *</label>
+                  <input type="text" value={form.name} onChange={(e) => updateForm({ name: e.target.value })} placeholder="Enter initiative name" className={inputCls} />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1 flex justify-between">
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground mb-1.5 flex justify-between">
                     <span>Executive Summary</span>
-                    <span>{form.executive_summary.length}/500</span>
+                    <span className="normal-case tracking-normal font-normal">{form.executive_summary.length}/500</span>
                   </label>
                   <textarea
                     value={form.executive_summary}
                     onChange={(e) => updateForm({ executive_summary: e.target.value.slice(0, 500) })}
                     rows={4}
                     placeholder="Enter executive summary"
-                    className="w-full px-3 py-2 bg-surface-raised border border-border rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+                    className="w-full px-3 py-2 bg-surface-container border-none rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-none"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Status</label>
-                    <select
-                      value={form.status}
-                      onChange={(e) => updateForm({ status: e.target.value })}
-                      className="w-full h-9 px-3 bg-surface-raised border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                    >
-                      {STATUSES.map((s) => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
+                    <label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground mb-1.5 block">Status</label>
+                    <select value={form.status} onChange={(e) => updateForm({ status: e.target.value })} className={selectCls}>
+                      {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Priority</label>
-                    <select
-                      value={form.priority}
-                      onChange={(e) => updateForm({ priority: e.target.value })}
-                      className="w-full h-9 px-3 bg-surface-raised border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                    >
-                      {PRIORITIES.map((p) => (
-                        <option key={p} value={p}>{p}</option>
-                      ))}
+                    <label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground mb-1.5 block">Priority</label>
+                    <select value={form.priority} onChange={(e) => updateForm({ priority: e.target.value })} className={selectCls}>
+                      {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
                     </select>
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Fiscal Quarter</label>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground mb-1.5 block">Fiscal Quarter</label>
                   <div className="flex items-center gap-3">
                     <input
                       type="number"
                       value={form.fiscal_quarter?.year || new Date().getFullYear()}
-                      onChange={(e) => {
-                        const year = parseInt(e.target.value);
-                        if (year >= 2020 && year <= 2040)
-                          updateForm({ fiscal_quarter: { ...form.fiscal_quarter!, year, quarter: form.fiscal_quarter?.quarter || 1 } });
-                      }}
+                      onChange={(e) => { const year = parseInt(e.target.value); if (year >= 2020 && year <= 2040) updateForm({ fiscal_quarter: { ...form.fiscal_quarter!, year, quarter: form.fiscal_quarter?.quarter || 1 } }); }}
                       disabled={form.unscheduled}
-                      min={2020}
-                      max={2040}
-                      className="w-24 h-9 px-3 bg-surface-raised border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-40"
+                      min={2020} max={2040}
+                      className="w-24 h-9 px-3 bg-surface-container border-none rounded-md text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-40"
                     />
                     <select
                       value={form.fiscal_quarter?.quarter || 1}
-                      onChange={(e) =>
-                        updateForm({
-                          fiscal_quarter: {
-                            ...form.fiscal_quarter!,
-                            year: form.fiscal_quarter?.year || new Date().getFullYear(),
-                            quarter: parseInt(e.target.value),
-                          },
-                        })
-                      }
+                      onChange={(e) => updateForm({ fiscal_quarter: { ...form.fiscal_quarter!, year: form.fiscal_quarter?.year || new Date().getFullYear(), quarter: parseInt(e.target.value) } })}
                       disabled={form.unscheduled}
-                      className="w-20 h-9 px-3 bg-surface-raised border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-40"
+                      className="w-20 h-9 px-3 bg-surface-container border-none rounded-md text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-40"
                     >
-                      {[1, 2, 3, 4].map((q) => (
-                        <option key={q} value={q}>Q{q}</option>
-                      ))}
+                      {[1,2,3,4].map((q) => <option key={q} value={q}>Q{q}</option>)}
                     </select>
                     <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={form.unscheduled}
-                        onChange={(e) => updateForm({ unscheduled: e.target.checked })}
-                        className="accent-primary"
-                      />
+                      <input type="checkbox" checked={form.unscheduled} onChange={(e) => updateForm({ unscheduled: e.target.checked })} className="accent-primary" />
                       Leave unscheduled
                     </label>
                   </div>
@@ -600,15 +473,8 @@ export function InitiativeManagerWorkspace() {
             {activeTab === "budget" && (
               <>
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-medium text-foreground">One-Time Investments</h4>
-                  <button
-                    onClick={() =>
-                      updateForm({
-                        budget_line_items: [...form.budget_line_items, { label: "", amount: "", cost_type: "Fixed" }],
-                      })
-                    }
-                    className="text-xs text-primary flex items-center gap-1 hover:underline"
-                  >
+                  <p className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">One-Time Investments</p>
+                  <button onClick={() => updateForm({ budget_line_items: [...form.budget_line_items, { label: "", amount: "", cost_type: "Fixed" }] })} className="text-xs text-primary flex items-center gap-1 hover:underline">
                     <Plus className="w-3 h-3" /> Add Line Item
                   </button>
                 </div>
@@ -619,50 +485,27 @@ export function InitiativeManagerWorkspace() {
                   <div key={idx} className="flex items-end gap-2">
                     <div className="flex-1">
                       <label className="text-[10px] text-muted-foreground mb-0.5 block">Label</label>
-                      <input
-                        type="text"
-                        value={item.label}
-                        onChange={(e) => updateBudgetItem(idx, { label: e.target.value.slice(0, 400) })}
-                        placeholder="Item label"
-                        className="w-full h-8 px-2 bg-surface-raised border border-border rounded text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                      />
+                      <input type="text" value={item.label} onChange={(e) => updateBudgetItem(idx, { label: e.target.value.slice(0, 400) })} placeholder="Item label" className="w-full h-8 px-2 bg-surface-container border-none rounded text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
                     </div>
                     <div className="w-28">
                       <label className="text-[10px] text-muted-foreground mb-0.5 block">Amount ($)</label>
-                      <input
-                        type="number"
-                        value={item.amount}
-                        onChange={(e) => updateBudgetItem(idx, { amount: e.target.value })}
-                        placeholder="0.00"
-                        min="0"
-                        step="0.01"
-                        className="w-full h-8 px-2 bg-surface-raised border border-border rounded text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                      />
+                      <input type="number" value={item.amount} onChange={(e) => updateBudgetItem(idx, { amount: e.target.value })} placeholder="0.00" min="0" step="0.01" className="w-full h-8 px-2 bg-surface-container border-none rounded text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
                     </div>
                     <div className="w-24">
                       <label className="text-[10px] text-muted-foreground mb-0.5 block">Type</label>
-                      <select
-                        value={item.cost_type}
-                        onChange={(e) => updateBudgetItem(idx, { cost_type: e.target.value as "Fixed" | "PerAsset" })}
-                        className="w-full h-8 px-2 bg-surface-raised border border-border rounded text-xs text-foreground focus:outline-none"
-                      >
+                      <select value={item.cost_type} onChange={(e) => updateBudgetItem(idx, { cost_type: e.target.value as "Fixed" | "PerAsset" })} className="w-full h-8 px-2 bg-surface-container border-none rounded text-xs text-foreground focus:outline-none">
                         <option value="Fixed">Fixed</option>
                         <option value="PerAsset">Per Asset</option>
                       </select>
                     </div>
-                    <button
-                      onClick={() =>
-                        updateForm({ budget_line_items: form.budget_line_items.filter((_, i) => i !== idx) })
-                      }
-                      className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-destructive"
-                    >
+                    <button onClick={() => updateForm({ budget_line_items: form.budget_line_items.filter((_, i) => i !== idx) })} className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 ))}
-                <div className="pt-2 border-t border-border flex justify-between text-xs">
+                <div className="pt-2 border-t border-border/15 flex justify-between text-xs">
                   <span className="text-muted-foreground">Total One-Time</span>
-                  <span className="font-medium text-foreground">${budgetTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+                  <span className="font-mono font-medium text-foreground">${budgetTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
                 </div>
                 <p className="text-[10px] text-muted-foreground">Amounts in USD</p>
               </>
@@ -671,18 +514,8 @@ export function InitiativeManagerWorkspace() {
             {activeTab === "recurring" && (
               <>
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-medium text-foreground">Recurring Investments</h4>
-                  <button
-                    onClick={() =>
-                      updateForm({
-                        recurring_line_items: [
-                          ...form.recurring_line_items,
-                          { label: "", amount: "", cost_type: "Fixed", frequency: "Monthly" },
-                        ],
-                      })
-                    }
-                    className="text-xs text-primary flex items-center gap-1 hover:underline"
-                  >
+                  <p className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Recurring Investments</p>
+                  <button onClick={() => updateForm({ recurring_line_items: [...form.recurring_line_items, { label: "", amount: "", cost_type: "Fixed", frequency: "Monthly" }] })} className="text-xs text-primary flex items-center gap-1 hover:underline">
                     <Plus className="w-3 h-3" /> Add Recurring Item
                   </button>
                 </div>
@@ -693,66 +526,39 @@ export function InitiativeManagerWorkspace() {
                   <div key={idx} className="flex items-end gap-2">
                     <div className="flex-1">
                       <label className="text-[10px] text-muted-foreground mb-0.5 block">Label</label>
-                      <input
-                        type="text"
-                        value={item.label}
-                        onChange={(e) => updateRecurringItem(idx, { label: e.target.value.slice(0, 400) })}
-                        placeholder="Item label"
-                        className="w-full h-8 px-2 bg-surface-raised border border-border rounded text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                      />
+                      <input type="text" value={item.label} onChange={(e) => updateRecurringItem(idx, { label: e.target.value.slice(0, 400) })} placeholder="Item label" className="w-full h-8 px-2 bg-surface-container border-none rounded text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
                     </div>
                     <div className="w-24">
                       <label className="text-[10px] text-muted-foreground mb-0.5 block">Amount ($)</label>
-                      <input
-                        type="number"
-                        value={item.amount}
-                        onChange={(e) => updateRecurringItem(idx, { amount: e.target.value })}
-                        placeholder="0.00"
-                        min="0"
-                        step="0.01"
-                        className="w-full h-8 px-2 bg-surface-raised border border-border rounded text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                      />
+                      <input type="number" value={item.amount} onChange={(e) => updateRecurringItem(idx, { amount: e.target.value })} placeholder="0.00" min="0" step="0.01" className="w-full h-8 px-2 bg-surface-container border-none rounded text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
                     </div>
                     <div className="w-20">
                       <label className="text-[10px] text-muted-foreground mb-0.5 block">Type</label>
-                      <select
-                        value={item.cost_type}
-                        onChange={(e) => updateRecurringItem(idx, { cost_type: e.target.value as "Fixed" | "PerAsset" })}
-                        className="w-full h-8 px-2 bg-surface-raised border border-border rounded text-xs text-foreground focus:outline-none"
-                      >
+                      <select value={item.cost_type} onChange={(e) => updateRecurringItem(idx, { cost_type: e.target.value as "Fixed" | "PerAsset" })} className="w-full h-8 px-2 bg-surface-container border-none rounded text-xs text-foreground focus:outline-none">
                         <option value="Fixed">Fixed</option>
                         <option value="PerAsset">Per Asset</option>
                       </select>
                     </div>
                     <div className="w-24">
                       <label className="text-[10px] text-muted-foreground mb-0.5 block">Frequency</label>
-                      <select
-                        value={item.frequency}
-                        onChange={(e) => updateRecurringItem(idx, { frequency: e.target.value as "Monthly" | "Yearly" })}
-                        className="w-full h-8 px-2 bg-surface-raised border border-border rounded text-xs text-foreground focus:outline-none"
-                      >
+                      <select value={item.frequency} onChange={(e) => updateRecurringItem(idx, { frequency: e.target.value as "Monthly" | "Yearly" })} className="w-full h-8 px-2 bg-surface-container border-none rounded text-xs text-foreground focus:outline-none">
                         <option value="Monthly">Monthly</option>
                         <option value="Yearly">Yearly</option>
                       </select>
                     </div>
-                    <button
-                      onClick={() =>
-                        updateForm({ recurring_line_items: form.recurring_line_items.filter((_, i) => i !== idx) })
-                      }
-                      className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-destructive"
-                    >
+                    <button onClick={() => updateForm({ recurring_line_items: form.recurring_line_items.filter((_, i) => i !== idx) })} className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 ))}
-                <div className="pt-2 border-t border-border space-y-1 text-xs">
+                <div className="pt-2 border-t border-border/15 space-y-1 text-xs">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Monthly Total</span>
-                    <span className="font-medium text-foreground">${monthlyTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+                    <span className="font-mono font-medium text-foreground">${monthlyTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Yearly Total</span>
-                    <span className="font-medium text-foreground">${yearlyTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+                    <span className="font-mono font-medium text-foreground">${yearlyTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
                   </div>
                 </div>
               </>
@@ -763,57 +569,25 @@ export function InitiativeManagerWorkspace() {
                 <p className="text-xs text-muted-foreground">Select which clients to create this initiative for</p>
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                  <input
-                    type="text"
-                    placeholder="Search clients…"
-                    value={clientSearch}
-                    onChange={(e) => setClientSearch(e.target.value)}
-                    className="w-full h-8 pl-8 pr-3 bg-surface-raised border border-border rounded-md text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
+                  <input type="text" placeholder="Search clients…" value={clientSearch} onChange={(e) => setClientSearch(e.target.value)} className="w-full h-8 pl-8 pr-3 bg-surface-container border-none rounded-md text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">{selectedClientIds.length} clients selected</span>
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => setSelectedClientIds(clients.map((c) => c.id))}
-                      className="text-[10px] text-primary hover:underline"
-                    >
-                      Select All
-                    </button>
-                    <button
-                      onClick={() => setSelectedClientIds([])}
-                      className="text-[10px] text-muted-foreground hover:underline"
-                    >
-                      Deselect All
-                    </button>
+                    <button onClick={() => setSelectedClientIds(clients.map((c) => c.id))} className="text-[10px] text-primary hover:underline">Select All</button>
+                    <button onClick={() => setSelectedClientIds([])} className="text-[10px] text-muted-foreground hover:underline">Deselect All</button>
                   </div>
                 </div>
-                <div className="border border-border rounded-md divide-y divide-border">
+                <div className="border border-border/15 rounded-lg divide-y divide-border/10">
                   {pagedClients.map((client) => (
-                    <label
-                      key={client.id}
-                      className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-surface-raised transition-colors"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedClientIds.includes(client.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedClientIds((prev) => [...prev, client.id]);
-                          } else {
-                            setSelectedClientIds((prev) => prev.filter((id) => id !== client.id));
-                          }
-                        }}
-                        className="accent-primary"
-                      />
+                    <label key={client.id} className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-surface-container transition-colors">
+                      <input type="checkbox" checked={selectedClientIds.includes(client.id)} onChange={(e) => { if (e.target.checked) setSelectedClientIds((prev) => [...prev, client.id]); else setSelectedClientIds((prev) => prev.filter((id) => id !== client.id)); }} className="accent-primary" />
                       <span className="text-xs text-foreground flex-1">{client.name}</span>
                       <Badge className="bg-muted text-muted-foreground">{client.lifecycle}</Badge>
                       <span className="text-[10px] text-muted-foreground">{client.num_hardware_assets} assets</span>
                     </label>
                   ))}
-                  {pagedClients.length === 0 && (
-                    <p className="text-xs text-muted-foreground text-center py-6">No clients found.</p>
-                  )}
+                  {pagedClients.length === 0 && <p className="text-xs text-muted-foreground text-center py-6">No clients found.</p>}
                 </div>
                 <Pagination page={clientPage} totalPages={clientTotalPages} onPageChange={setClientPage} />
               </>
@@ -821,31 +595,27 @@ export function InitiativeManagerWorkspace() {
           </div>
 
           {/* Deploy Button */}
-          <div className="p-4 border-t border-border">
+          <div className="p-4 border-t border-border/15">
             <button
               onClick={handleDeploy}
               disabled={!canDeploy}
-              className="w-full h-10 bg-primary hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed text-primary-foreground font-medium rounded-md flex items-center justify-center gap-2 transition-colors"
+              className="w-full h-10 bg-gradient-to-br from-primary to-primary-dim disabled:opacity-40 disabled:cursor-not-allowed text-primary-foreground font-semibold rounded-lg flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
             >
               <Play className="w-4 h-4" />
               Deploy Initiative to {selectedClientIds.length} Client{selectedClientIds.length !== 1 ? "s" : ""}
             </button>
-            {!form.name.trim() && (
-              <p className="text-[10px] text-destructive mt-1">Initiative name is required</p>
-            )}
-            {selectedClientIds.length === 0 && (
-              <p className="text-[10px] text-warning mt-1">Select at least one client in the Clients tab</p>
-            )}
+            {!form.name.trim() && <p className="text-[10px] text-destructive mt-1">Initiative name is required</p>}
+            {selectedClientIds.length === 0 && <p className="text-[10px] text-warning mt-1">Select at least one client in the Clients tab</p>}
           </div>
         </div>
       </div>
 
       {/* DEPLOYMENT MODAL */}
       {deployState?.isOpen && (
-        <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl bg-card border border-border rounded-lg shadow-2xl max-h-[85vh] flex flex-col">
-            <div className="p-5 border-b border-border">
-              <h2 className="font-heading font-bold text-lg text-foreground">
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="w-full max-w-2xl bg-surface border border-border/20 rounded-xl shadow-2xl max-h-[85vh] flex flex-col animate-scale-in">
+            <div className="p-5 border-b border-border/15">
+              <h2 className="text-sm font-semibold tracking-tight text-foreground">
                 {deployState.overallStatus === "running" ? "Deploying Initiative…" : "Deployment Complete"}
               </h2>
               <p className="text-xs text-muted-foreground mt-1">
@@ -855,15 +625,13 @@ export function InitiativeManagerWorkspace() {
               </p>
               {deployState.overallStatus === "running" && (
                 <div className="mt-3">
-                  <Progress
-                    value={
-                      ((deployState.succeeded + deployState.failed) / deployState.progress.length) * 100
-                    }
-                    className="h-2"
-                  />
-                  <p className="text-[10px] text-muted-foreground mt-1">
-                    {deployState.succeeded + deployState.failed} of {deployState.progress.length} clients complete
-                  </p>
+                  <div className="h-1 bg-surface-container-highest rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary rounded-full transition-all duration-300"
+                      style={{ width: `${((deployState.succeeded + deployState.failed) / deployState.progress.length) * 100}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1">{deployState.succeeded + deployState.failed} of {deployState.progress.length} clients complete</p>
                 </div>
               )}
             </div>
@@ -871,22 +639,13 @@ export function InitiativeManagerWorkspace() {
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {deployState.progress.map((client, ci) => {
                 const allSuccess = client.steps.every((s) => s.status === "success");
-                const hasError = client.steps.some((s) => s.status === "error");
+                const hasError   = client.steps.some((s) => s.status === "error");
                 return (
-                  <div
-                    key={ci}
-                    className={`border rounded-md p-3 ${
-                      allSuccess
-                        ? "border-success/30 bg-success/5"
-                        : hasError
-                        ? "border-destructive/30 bg-destructive/5"
-                        : "border-border"
-                    }`}
-                  >
+                  <div key={ci} className={`border rounded-lg p-3 ${allSuccess ? "border-success/20 bg-success/5" : hasError ? "border-destructive/20 bg-destructive/5" : "border-border/15"}`}>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-medium text-foreground">{client.clientName}</span>
-                      {allSuccess && <Badge className="bg-success/15 text-success">Complete</Badge>}
-                      {hasError && <Badge className="bg-destructive/15 text-destructive">Partially Failed</Badge>}
+                      {allSuccess && <Badge className="rounded-full text-[10px] font-bold uppercase tracking-tight bg-success/15 text-success">Complete</Badge>}
+                      {hasError   && <Badge className="rounded-full text-[10px] font-bold uppercase tracking-tight bg-destructive/15 text-destructive">Partially Failed</Badge>}
                     </div>
                     <div className="space-y-1">
                       {client.steps.map((step, si) => (
@@ -895,11 +654,7 @@ export function InitiativeManagerWorkspace() {
                           <span className={step.status === "error" ? "text-destructive" : "text-muted-foreground"}>
                             Step {si + 1}: {step.name}
                           </span>
-                          {step.error && (
-                            <span className="text-destructive ml-auto truncate max-w-[200px]" title={step.error}>
-                              {step.error}
-                            </span>
-                          )}
+                          {step.error && <span className="text-destructive ml-auto truncate max-w-[200px]" title={step.error}>{step.error}</span>}
                         </div>
                       ))}
                     </div>
@@ -909,17 +664,11 @@ export function InitiativeManagerWorkspace() {
             </div>
 
             {deployState.overallStatus === "complete" && (
-              <div className="p-4 border-t border-border flex gap-2 justify-end">
-                <button
-                  onClick={() => closeDeployModal(false)}
-                  className="px-4 py-2 border border-border text-sm rounded-md text-foreground hover:bg-surface-raised"
-                >
+              <div className="p-4 border-t border-border/15 flex gap-2 justify-end">
+                <button onClick={() => closeDeployModal(false)} className="px-4 py-2 bg-surface-container border-none text-sm rounded-lg text-foreground hover:bg-surface-container-high transition-colors">
                   Deploy Another
                 </button>
-                <button
-                  onClick={() => closeDeployModal(true)}
-                  className="px-4 py-2 bg-primary text-primary-foreground text-sm rounded-md hover:bg-primary/90 flex items-center gap-1.5"
-                >
+                <button onClick={() => closeDeployModal(true)} className="px-4 py-2 bg-gradient-to-br from-primary to-primary-dim text-primary-foreground text-sm rounded-lg hover:opacity-90 flex items-center gap-1.5 transition-opacity">
                   <RefreshCw className="w-3.5 h-3.5" /> Done
                 </button>
               </div>
@@ -930,36 +679,24 @@ export function InitiativeManagerWorkspace() {
 
       {/* DELETE CONFIRMATION MODAL */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-card border border-border rounded-lg shadow-2xl">
-            <div className="p-5 border-b border-border">
-              <h2 className="font-heading font-bold text-base text-foreground">
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="w-full max-w-md bg-surface border border-border/20 rounded-xl shadow-2xl animate-scale-in">
+            <div className="p-5 border-b border-border/15">
+              <h2 className="text-sm font-semibold tracking-tight text-foreground">
                 Delete {selectedForDelete.length} Initiative{selectedForDelete.length !== 1 ? "s" : ""}?
               </h2>
-              <p className="text-xs text-muted-foreground mt-1">
-                This will permanently delete the following initiatives and cannot be undone:
-              </p>
+              <p className="text-xs text-muted-foreground mt-1">This will permanently delete the following initiatives and cannot be undone:</p>
             </div>
             <div className="p-5 max-h-48 overflow-y-auto">
               <ul className="list-disc list-inside space-y-1">
-                {selectedForDelete.map((init) => (
-                  <li key={init.id} className="text-xs text-foreground">{init.name}</li>
-                ))}
+                {selectedForDelete.map((init) => <li key={init.id} className="text-xs text-foreground">{init.name}</li>)}
               </ul>
             </div>
-            <div className="p-4 border-t border-border flex gap-2 justify-end">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                disabled={deleting}
-                className="px-4 py-2 border border-border text-sm rounded-md text-foreground hover:bg-surface-raised disabled:opacity-50"
-              >
+            <div className="p-4 border-t border-border/15 flex gap-2 justify-end">
+              <button onClick={() => setShowDeleteModal(false)} disabled={deleting} className="px-4 py-2 bg-surface-container border-none text-sm rounded-lg text-foreground hover:bg-surface-container-high disabled:opacity-50 transition-colors">
                 Cancel
               </button>
-              <button
-                onClick={handleBulkDelete}
-                disabled={deleting}
-                className="px-4 py-2 bg-destructive text-destructive-foreground text-sm rounded-md hover:bg-destructive/90 flex items-center gap-1.5 disabled:opacity-50"
-              >
+              <button onClick={handleBulkDelete} disabled={deleting} className="px-4 py-2 bg-destructive text-destructive-foreground text-sm rounded-lg hover:bg-destructive/90 flex items-center gap-1.5 disabled:opacity-50 transition-colors">
                 {deleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 Delete Permanently
               </button>
