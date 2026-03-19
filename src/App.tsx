@@ -24,9 +24,6 @@ const App = () => (
             <Route path="/goals"          element={<Goals />} />
             <Route path="/opportunities"  element={<Opportunities />} />
             <Route path="/settings"       element={<SettingsPage />} />
-            {/* Legacy redirects */}
-            <Route path="/marketplace"    element={<Navigate to="/" replace />} />
-            <Route path="/marketplace/*"  element={<Navigate to="/" replace />} />
             <Route path="*"              element={<NotFound />} />
           </Routes>
         </BrowserRouter>
