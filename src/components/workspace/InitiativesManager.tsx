@@ -79,7 +79,7 @@ const smallSelectCls = "flex-1 h-7 px-2 bg-surface-container border-none rounded
 
 // --- Main Component ---
 
-export function InitiativeManagerWorkspace() {
+export function InitiativesManager() {
   const { apiKey } = useAuth();
 
   // Data

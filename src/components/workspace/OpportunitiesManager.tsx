@@ -25,7 +25,7 @@ interface Opportunity {
   source_stage: string;
 }
 
-export function OpportunitiesWorkspace() {
+export function OpportunitiesManager() {
   const { apiKey } = useAuth();
   const [loading, setLoading] = useState(false);
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);

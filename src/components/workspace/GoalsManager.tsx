@@ -67,7 +67,7 @@ function emptyForm(): GoalTemplateForm {
 
 // --- Main Component ---
 
-export function GoalManagerWorkspace() {
+export function GoalsManager() {
   const { apiKey } = useAuth();
 
   // Data
