@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { ApiKeyPrompt } from "./ApiKeyPrompt";
+import { NAV_TOOLS } from "@/lib/constants";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,14 +14,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface TopbarProps {
-  title: string;
-}
-
-export function Topbar({ title }: TopbarProps) {
+export function Topbar() {
   const { hasApiKey, clearApiKey } = useAuth();
   const [showPrompt, setShowPrompt] = useState(false);
   const [showDisconnect, setShowDisconnect] = useState(false);
+  const location = useLocation();
+
+  const currentTool = NAV_TOOLS.find((t) => t.path === location.pathname);
+  const title = currentTool?.label ?? "Tools";
 
   return (
     <>
