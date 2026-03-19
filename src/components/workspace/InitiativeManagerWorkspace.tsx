@@ -615,8 +615,6 @@ export function InitiativeManagerWorkspace() {
               <Play className="w-4 h-4" />
               Deploy Initiative to {selectedClientIds.length} Client{selectedClientIds.length !== 1 ? "s" : ""}
             </button>
-            {!form.name.trim() && <p className="text-[10px] text-destructive mt-1">Initiative name is required</p>}
-            {selectedClientIds.length === 0 && <p className="text-[10px] text-warning mt-1">Select at least one client in the Clients tab</p>}
           </div>
         </div>
       </div>

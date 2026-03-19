@@ -511,8 +511,6 @@ export function GoalManagerWorkspace() {
               <Play className="w-4 h-4" />
               Deploy Goal to {selectedClientIds.length} Client{selectedClientIds.length !== 1 ? "s" : ""}
             </button>
-            {!form.title.trim() && <p className="text-[10px] text-destructive mt-1">Goal title is required</p>}
-            {selectedClientIds.length === 0 && <p className="text-[10px] text-warning mt-1">Select at least one client in the Clients tab</p>}
           </div>
         </div>
       </div>
