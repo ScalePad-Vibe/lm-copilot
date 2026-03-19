@@ -304,7 +304,7 @@ export function InitiativesManager() {
         <Panel className="w-[40%]">
           <PanelHeader>
             <PanelLabel
-              label="Initiative Library"
+              label="Initiatives Library"
               count={initiatives.length}
               action={checkedIds.size > 0 && (
                 <button

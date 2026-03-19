@@ -289,7 +289,7 @@ export function GoalsManager() {
         <Panel className="w-[40%]">
           <PanelHeader>
             <PanelLabel
-              label="Goal Library"
+              label="Goals Library"
               count={goals.length}
               action={checkedIds.size > 0 && (
                 <button onClick={() => setShowDeleteModal(true)} className="text-xs bg-destructive/15 text-destructive hover:bg-destructive/25 px-2.5 py-1 rounded-md font-medium flex items-center gap-1">
