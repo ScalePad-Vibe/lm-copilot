@@ -5,7 +5,7 @@
  * This keeps the API key server-side and avoids CORS issues with the ScalePad API.
  *
  * Flow:
- *   UI component → proxyCall() → supabase edge fn (scalepad-proxy) → api.scalepad.com
+ *   UI component → proxyCall() → edge function (scalepad-proxy) → api.scalepad.com
  *
  * The proxy always returns HTTP 200. Upstream errors are surfaced in the response
  * body via `upstream_status` so callers can handle them explicitly.

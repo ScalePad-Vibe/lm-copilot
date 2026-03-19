@@ -225,13 +225,15 @@ export async function deployInitiativeToClient(
     }
   };
 
-  let initiativeId!: string;
+  let initiativeId: string | undefined;
 
   await step(0, async () => {
     initiativeId = await createInitiative(apiKey, clientId, form.name, form.executive_summary);
   });
 
-  await step(1, () => updateInitiativeStatus(apiKey, initiativeId, form.status));
+  if (!initiativeId) throw new Error("Initiative creation did not return an ID");
+
+  await step(1, () => updateInitiativeStatus(apiKey, initiativeId!, form.status));
   await step(2, () => updateInitiativePriority(apiKey, initiativeId, form.priority));
   await step(3, () =>
     updateInitiativeSchedule(apiKey, initiativeId, form.unscheduled ? null : form.fiscal_quarter)

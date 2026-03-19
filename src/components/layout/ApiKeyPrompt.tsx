@@ -17,12 +17,15 @@ export function ApiKeyPrompt({ onDismiss }: ApiKeyPromptProps) {
   const [key, setKey] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const handleConnect = async () => {
+  const handleConnect = () => {
     if (!key.trim()) return;
-    setSaving(true);
-    await setApiKey(key.trim());
-    setSaving(false);
-    onDismiss?.();
+    try {
+      setApiKey(key.trim());
+      onDismiss?.();
+    } catch {
+      // sessionStorage may be unavailable (e.g. private browsing with storage blocked)
+      // — silently continue; the key will still be held in React state for this session
+    }
   };
 
   const card = (

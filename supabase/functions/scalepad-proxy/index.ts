@@ -12,7 +12,7 @@
  * Request format (JSON body):
  *   {
  *     endpoint: string;  // Path relative to api.scalepad.com, e.g. "/lifecycle-manager/v1/initiatives"
- *     method:   string;  // HTTP method, default "GET"
+ *     method:   string;  // HTTP method — must be one of ALLOWED_METHODS
  *     body?:    object;  // Optional JSON body for POST/PUT
  *   }
  *
@@ -22,12 +22,18 @@
  * Response format (always HTTP 200):
  *   { upstream_status: number, ...upstreamResponseBody }
  *
- * The response always returns HTTP 200 so that supabase.functions.invoke()
+ * The response always returns HTTP 200 so that the functions client
  * treats every call as successful and lets callers inspect `upstream_status`
  * to handle 4xx/5xx errors themselves.
  */
 
 const SCALEPAD_API_BASE = "https://api.scalepad.com";
+
+// ── Security constraints ───────────────────────────────────────────────────────
+const ALLOWED_METHODS  = ["GET", "POST", "PUT", "DELETE"] as const;
+const MAX_ENDPOINT_LEN = 512;
+
+type AllowedMethod = typeof ALLOWED_METHODS[number];
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -57,14 +63,27 @@ Deno.serve(async (req) => {
       return json({ error: "Missing x-scalepad-api-key header" });
     }
 
+    // ── Validate method (explicit allowlist) ──────────────────────────────────
+    if (!ALLOWED_METHODS.includes(method as AllowedMethod)) {
+      return json({
+        error: `Method "${method}" not allowed. Valid: ${ALLOWED_METHODS.join(", ")}`,
+      });
+    }
+
     // ── Validate endpoint path ────────────────────────────────────────────────
-    if (!endpoint || !endpoint.startsWith("/") || endpoint.includes("..")) {
+    if (
+      !endpoint ||
+      typeof endpoint !== "string" ||
+      !endpoint.startsWith("/") ||
+      endpoint.includes("..") ||
+      endpoint.length > MAX_ENDPOINT_LEN
+    ) {
       return json({ error: "Invalid endpoint path" });
     }
 
     // ── Forward to ScalePad API ───────────────────────────────────────────────
     const upstream = await fetch(`${SCALEPAD_API_BASE}${endpoint}`, {
-      method,
+      method: method as AllowedMethod,
       headers: {
         "x-api-key": apiKey,
         "Accept": "application/json",
