@@ -33,7 +33,7 @@ import {
   RefreshCw,
   ChevronRight,
 } from "lucide-react";
-import { Badge, StepIcon, Pagination, WorkspaceLoader, WorkspaceError, Panel, PanelHeader, PanelLabel, PanelSearch, PanelBody, PanelEmpty, smallSelectCls, inputCls, selectCls } from "@/components/workspace/Shared";
+import { Badge, StepIcon, Pagination, WorkspaceLoader, WorkspaceError, Panel, PanelHeader, PanelLabel, PanelSearch, PanelBody, PanelEmpty, smallSelectCls, inputCls, selectCls } from "@/components/tools/Shared";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";

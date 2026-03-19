@@ -10,7 +10,7 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
-import { WorkspaceLoader, WorkspaceError, Panel, PanelHeader, PanelLabel, PanelSearch, PanelBody, Badge, smallSelectCls } from "@/components/workspace/Shared";
+import { WorkspaceLoader, WorkspaceError, Panel, PanelHeader, PanelLabel, PanelSearch, PanelBody, Badge, smallSelectCls } from "@/components/tools/Shared";
 
 interface Opportunity {
   name: string;

@@ -1,6 +1,6 @@
 import { Shell } from "@/components/layout/Shell";
 import { ApiKeyGate } from "@/components/layout/ApiKeyGate";
-import { OpportunitiesManager } from "@/components/workspace/OpportunitiesManager";
+import { OpportunitiesManager } from "@/components/tools/OpportunitiesManager";
 
 export default function Opportunities() {
   return (
