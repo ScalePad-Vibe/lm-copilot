@@ -15,7 +15,6 @@ interface ApiKeyPromptProps {
 export function ApiKeyPrompt({ onDismiss }: ApiKeyPromptProps) {
   const { setApiKey } = useAuth();
   const [key, setKey] = useState("");
-  const [saving, setSaving] = useState(false);
 
   const handleConnect = () => {
     if (!key.trim()) return;
