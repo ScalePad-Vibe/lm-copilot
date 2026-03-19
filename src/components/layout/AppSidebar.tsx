@@ -18,7 +18,10 @@ export function AppSidebar() {
     <aside className="fixed left-0 top-0 bottom-0 w-64 bg-surface border-r border-border/15 flex flex-col z-30">
 
       {/* Brand */}
-      <div className="flex items-center gap-2.5 px-4 h-16 border-b border-border/15 shrink-0">
+      <div
+        onClick={() => navigate("/")}
+        className="flex items-center gap-2.5 px-4 h-16 border-b border-border/15 shrink-0 cursor-pointer hover:bg-surface-container transition-colors"
+      >
         <img src={scalePadLogo} alt="ScalePad" className="h-[26px] w-auto object-contain shrink-0" />
         <div className="w-px h-4 bg-border/40 shrink-0" />
         <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">LM Copilot</span>
