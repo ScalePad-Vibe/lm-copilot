@@ -37,7 +37,7 @@ import {
 } from "lucide-react";
 import { Badge, StepIcon, Pagination, WorkspaceLoader, WorkspaceError, Panel, PanelHeader, PanelLabel, PanelSearch, PanelBody, PanelEmpty, smallSelectCls, inputCls, selectCls } from "@/components/workspace/Shared";
 import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 // --- Constants ---
 
