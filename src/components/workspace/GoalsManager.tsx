@@ -109,6 +109,9 @@ export function GoalsManager() {
   const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
   const [clientPage, setClientPage]               = useState(1);
 
+  // Deploy confirmation
+  const [showConfirmDeploy, setShowConfirmDeploy] = useState(false);
+
   // Deployment
   const [deployState, setDeployState] = useState<{
     isOpen: boolean;
