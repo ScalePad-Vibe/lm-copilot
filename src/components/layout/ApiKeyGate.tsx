@@ -24,9 +24,7 @@ export function ApiKeyGate({ children }: ApiKeyGateProps) {
   return (
     <div className="flex-1 flex items-center justify-center p-8 h-full">
       <div className="bg-surface rounded-xl border border-border/20 p-8 max-w-sm w-full text-center space-y-5 animate-scale-in">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary-dim flex items-center justify-center mx-auto">
-          <KeyRound className="w-6 h-6 text-white" />
-        </div>
+        <img src={scalePadLogo} alt="ScalePad" className="h-6 w-auto object-contain mx-auto" />
         <div>
           <h3 className="text-base font-semibold tracking-tight mb-1">Connect your ScalePad API key</h3>
           <p className="text-xs text-muted-foreground leading-relaxed">
