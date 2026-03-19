@@ -22,7 +22,7 @@ export function AppSidebar() {
 
       {/* Brand */}
       <div className="flex flex-col justify-center px-4 h-16 border-b border-border/15 shrink-0 gap-1">
-        <img src={scalePadLogo} alt="ScalePad" className="h-5 w-auto object-contain object-left" />
+        <img src={scalePadLogo} alt="ScalePad" className="h-[26px] w-auto object-contain object-left" />
         <p className="text-[10px] text-muted-foreground uppercase tracking-widest">LMX Copilot</p>
       </div>
 

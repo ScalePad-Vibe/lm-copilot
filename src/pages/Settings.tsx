@@ -53,6 +53,10 @@ export default function SettingsPage() {
                   onChange={(e) => setNewKey(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSaveKey()}
                   placeholder="Enter API key…"
+                  autoComplete="off"
+                  data-1p-ignore
+                  data-lpignore="true"
+                  data-form-type="other"
                   className="flex-1 h-9 px-3 bg-surface-container border-none rounded-md text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                 />
                 <button
