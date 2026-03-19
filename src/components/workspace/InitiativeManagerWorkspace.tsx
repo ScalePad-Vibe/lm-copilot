@@ -377,16 +377,27 @@ export function InitiativeManagerWorkspace() {
 
         {/* RIGHT PANEL — Builder */}
         <div className="w-[60%] flex flex-col bg-surface border border-border/15 rounded-xl overflow-hidden">
-          <div className="px-4 pt-4 pb-3 border-b border-border/15 flex items-center justify-between">
-            <div>
+          <div className="px-4 pt-4 pb-3 border-b border-border/15 flex items-center justify-between gap-3">
+            <div className="min-w-0">
               <p className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Initiative Builder</p>
-              <p className="text-xs text-foreground mt-0.5 font-medium">
+              <p className="text-xs text-foreground mt-0.5 font-medium truncate">
                 {selectedInitiative ? selectedInitiative.name : "New Initiative"}
               </p>
             </div>
-            <button onClick={clearForm} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
-              <X className="w-3 h-3" /> Clear
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              {!form.name.trim() && (
+                <span className="text-[10px] text-warning/80 bg-warning/10 px-2 py-0.5 rounded-full">Name required</span>
+              )}
+              {form.name.trim() && selectedClientIds.length === 0 && (
+                <span className="text-[10px] text-muted-foreground bg-surface-container px-2 py-0.5 rounded-full">Select clients →</span>
+              )}
+              {canDeploy && (
+                <span className="text-[10px] text-success bg-success/10 px-2 py-0.5 rounded-full">Ready to deploy</span>
+              )}
+              <button onClick={clearForm} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
+                <X className="w-3 h-3" /> Clear
+              </button>
+            </div>
           </div>
 
           {/* Tabs */}
