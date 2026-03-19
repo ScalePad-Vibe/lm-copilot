@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { KeyRound, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import scalePadLogo from "@/assets/scalepad-logo.svg";
 
 interface ApiKeyGateProps {
   children: React.ReactNode;
