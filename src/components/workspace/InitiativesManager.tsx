@@ -163,6 +163,11 @@ export function InitiativesManager() {
 
   useEffect(() => { setLibPage(1); }, [libSearch, libStatus, libPriority, libClient]);
 
+  const libClientOptions = useMemo(
+    () => [...new Set(initiatives.map((i) => i.client?.label).filter(Boolean))].sort() as string[],
+    [initiatives]
+  );
+
   const libTotalPages = Math.max(1, Math.ceil(filteredInitiatives.length / PAGE_SIZE));
   const pagedInitiatives = filteredInitiatives.slice((libPage - 1) * PAGE_SIZE, libPage * PAGE_SIZE);
 

@@ -155,6 +155,11 @@ export function GoalsManager() {
 
   useEffect(() => { setLibPage(1); }, [libSearch, libStatus, libPeriodType, libClient]);
 
+  const libClientOptions = useMemo(
+    () => [...new Set(goals.map((g) => g.client?.label).filter(Boolean))].sort() as string[],
+    [goals]
+  );
+
   const libTotalPages = Math.max(1, Math.ceil(filteredGoals.length / PAGE_SIZE));
   const pagedGoals    = filteredGoals.slice((libPage - 1) * PAGE_SIZE, libPage * PAGE_SIZE);
 
