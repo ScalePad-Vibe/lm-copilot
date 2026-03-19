@@ -298,14 +298,12 @@ export function InitiativesManager() {
       <div className="flex gap-4 h-full">
 
         {/* LEFT PANEL — Library */}
-        <div className="w-[40%] flex flex-col bg-surface border border-border/15 rounded-xl overflow-hidden">
-          <div className="px-4 pt-4 pb-3 border-b border-border/15 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <p className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Initiative Library</p>
-                <Badge className="bg-primary/15 text-primary">{initiatives.length}</Badge>
-              </div>
-              {checkedIds.size > 0 && (
+        <Panel className="w-[40%]">
+          <PanelHeader>
+            <PanelLabel
+              label="Initiative Library"
+              count={initiatives.length}
+              action={checkedIds.size > 0 && (
                 <button
                   onClick={() => setShowDeleteModal(true)}
                   className="text-xs bg-destructive/15 text-destructive hover:bg-destructive/25 px-2.5 py-1 rounded-md font-medium flex items-center gap-1"
@@ -313,17 +311,8 @@ export function InitiativesManager() {
                   <Trash2 className="w-3 h-3" /> Delete ({checkedIds.size})
                 </button>
               )}
-            </div>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search initiatives…"
-                value={libSearch}
-                onChange={(e) => setLibSearch(e.target.value)}
-                className="w-full h-8 pl-8 pr-3 bg-surface-container border-none rounded-md text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-              />
-            </div>
+            />
+            <PanelSearch value={libSearch} onChange={setLibSearch} placeholder="Search initiatives…" />
             <div className="flex gap-2">
               <select value={libStatus} onChange={(e) => setLibStatus(e.target.value)} className={smallSelectCls}>
                 <option value="All">All Status</option>
@@ -334,7 +323,7 @@ export function InitiativesManager() {
                 {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
             </div>
-          </div>
+          </PanelHeader>
 
           {/* Select-all row */}
           <div className="flex items-center gap-2 px-4 py-1.5 border-b border-border/15 bg-surface-container/50">
@@ -342,9 +331,9 @@ export function InitiativesManager() {
             <span className="text-[10px] text-muted-foreground">Select all on page</span>
           </div>
 
-          <div className="flex-1 overflow-y-auto">
+          <PanelBody>
             {pagedInitiatives.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-8">No initiatives found.</p>
+              <PanelEmpty message="No initiatives found." />
             ) : (
               pagedInitiatives.map((init) => (
                 <div
@@ -378,13 +367,13 @@ export function InitiativesManager() {
                 </div>
               ))
             )}
-          </div>
+          </PanelBody>
 
           <Pagination page={libPage} totalPages={libTotalPages} onPageChange={setLibPage} />
-        </div>
+        </Panel>
 
         {/* RIGHT PANEL — Builder */}
-        <div className="w-[60%] flex flex-col bg-surface border border-border/15 rounded-xl overflow-hidden">
+        <Panel className="w-[60%]">
           <div className="px-4 pt-4 pb-3 border-b border-border/15 flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Initiative Builder</p>
