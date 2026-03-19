@@ -1,7 +1,1 @@
-project_id = "huotykitdtnycwpnnaup"
-
-[functions.scalepad-proxy]
-verify_jwt = false
-
-[functions.app-feedback]
-verify_jwt = false
+project_id = "hnnldswfbuljfkzepykl"
