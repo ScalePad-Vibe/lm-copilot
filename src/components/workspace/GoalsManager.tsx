@@ -144,7 +144,10 @@ export function GoalsManager() {
   const filteredGoals = useMemo(() => goals.filter((g) => {
     if (libStatus !== "All" && g.status !== libStatus) return false;
     if (libPeriodType !== "All" && g.period?.type !== libPeriodType) return false;
-    if (libSearch && !g.title.toLowerCase().includes(libSearch.toLowerCase())) return false;
+    if (libSearch) {
+      const q = libSearch.toLowerCase();
+      if (!g.title.toLowerCase().includes(q) && !(g.client?.label ?? "").toLowerCase().includes(q)) return false;
+    }
     return true;
   }), [goals, libSearch, libStatus, libPeriodType]);
 

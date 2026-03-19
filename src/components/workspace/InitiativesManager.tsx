@@ -152,7 +152,10 @@ export function InitiativesManager() {
   const filteredInitiatives = useMemo(() => initiatives.filter((i) => {
     if (libStatus !== "All" && i.status !== libStatus) return false;
     if (libPriority !== "All" && i.priority !== libPriority) return false;
-    if (libSearch && !i.name.toLowerCase().includes(libSearch.toLowerCase())) return false;
+    if (libSearch) {
+      const q = libSearch.toLowerCase();
+      if (!i.name.toLowerCase().includes(q) && !(i.client?.label ?? "").toLowerCase().includes(q)) return false;
+    }
     return true;
   }), [initiatives, libSearch, libStatus, libPriority]);
 
