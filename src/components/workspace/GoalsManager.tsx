@@ -316,6 +316,10 @@ export function GoalsManager() {
                 <option value="PeriodHalf">Half</option>
                 <option value="PeriodQuarter">Quarter</option>
               </select>
+              <select value={libClient} onChange={(e) => setLibClient(e.target.value)} className={smallSelectCls}>
+                <option value="All">All Clients</option>
+                {libClientOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
             </div>
           </PanelHeader>
 

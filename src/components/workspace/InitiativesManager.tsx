@@ -332,6 +332,10 @@ export function InitiativesManager() {
                 <option value="All">All Priority</option>
                 {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
+              <select value={libClient} onChange={(e) => setLibClient(e.target.value)} className={smallSelectCls}>
+                <option value="All">All Clients</option>
+                {libClientOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
             </div>
           </PanelHeader>
 
