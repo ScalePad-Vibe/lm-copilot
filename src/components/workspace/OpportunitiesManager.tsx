@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, AlertTriangle, Filter } from "lucide-react";
+import { AlertTriangle, Filter } from "lucide-react";
 import {
   Table,
   TableHeader,
@@ -10,14 +10,7 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { WorkspaceLoader, WorkspaceError, Panel, PanelHeader, PanelLabel, PanelSearch, PanelBody, Badge, smallSelectCls } from "@/components/workspace/Shared";
 
 interface Opportunity {
   name: string;
@@ -56,36 +49,22 @@ export function OpportunitiesManager() {
     setLoading(true);
     setError(null);
     setOpportunities([]);
-
     try {
       const { data: json, error: fnError } = await supabase.functions.invoke("scalepad-proxy", {
-        body: {
-          endpoint: "/core/v1/opportunities?page_size=200",
-          method: "GET",
-        },
-        headers: {
-          "x-scalepad-api-key": apiKey,
-        },
+        body: { endpoint: "/core/v1/opportunities?page_size=200", method: "GET" },
+        headers: { "x-scalepad-api-key": apiKey },
       });
-
       if (fnError) throw new Error(fnError.message || "Edge function error");
-
       if (json?.upstream_status && json.upstream_status !== 200) {
-        const detail = json.errors?.[0]?.detail || json.error || `API returned ${json.upstream_status}`;
-        throw new Error(detail);
+        throw new Error(json.errors?.[0]?.detail || json.error || `API returned ${json.upstream_status}`);
       }
-
       if (json?.error) throw new Error(json.error);
-
-      const items: Opportunity[] = (json.data || json.items || json || []).map(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (item: any) => ({
-          name: item.client?.name ?? item.name ?? "—",
-          title: item.title ?? "—",
-          source_stage: item.source_stage ?? "—",
-        })
-      );
-
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const items: Opportunity[] = (json.data || json.items || json || []).map((item: any) => ({
+        name: item.client?.name ?? item.name ?? "—",
+        title: item.title ?? "—",
+        source_stage: item.source_stage ?? "—",
+      }));
       setOpportunities(items);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
@@ -99,100 +78,73 @@ export function OpportunitiesManager() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  if (loading) return <WorkspaceLoader message="Fetching opportunities…" />;
+  if (error) return <WorkspaceError message={error} onRetry={fetchOpportunities} />;
+
   return (
-    <div className="space-y-5">
-      {loading && (
-        <div className="bg-card border border-border rounded-lg p-8 flex flex-col items-center justify-center gap-3 animate-fade-in">
-          <Loader2 className="w-8 h-8 text-primary animate-spin" />
-          <p className="text-sm text-muted-foreground">Fetching opportunities…</p>
+    <Panel className="h-full">
+      <PanelHeader>
+        <div className="flex items-center justify-between gap-3">
+          <PanelLabel
+            label="Opportunities"
+            count={filtered.length !== opportunities.length ? filtered.length : opportunities.length}
+          />
+          {filtered.length !== opportunities.length && (
+            <span className="text-[10px] text-muted-foreground">{opportunities.length} total</span>
+          )}
         </div>
-      )}
-
-      {error && (
-        <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-5 animate-fade-in">
-          <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle className="w-5 h-5 text-destructive" />
-            <h4 className="font-heading font-bold text-destructive">Error</h4>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Filter className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+          <select value={filterClient} onChange={(e) => setFilterClient(e.target.value)} className={smallSelectCls}>
+            <option value="__all__">All Clients</option>
+            {uniqueClients.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <select value={filterStage} onChange={(e) => setFilterStage(e.target.value)} className={smallSelectCls}>
+            <option value="__all__">All Stages</option>
+            {uniqueStages.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <div className="flex-1 min-w-[160px]">
+            <PanelSearch value={filterName} onChange={setFilterName} placeholder="Search by name…" />
           </div>
-          <p className="text-sm text-foreground">{error}</p>
         </div>
-      )}
+      </PanelHeader>
 
-      {!loading && !error && opportunities.length === 0 && (
-        <div className="bg-card border border-border rounded-lg p-5 text-center animate-fade-in">
-          <p className="text-sm text-muted-foreground">No opportunities found.</p>
-        </div>
-      )}
-
-      {opportunities.length > 0 && (
-        <div className="bg-card border border-border rounded-lg overflow-hidden animate-fade-in">
-          <div className="p-4 border-b border-border space-y-3">
-            <h4 className="font-heading font-bold text-sm text-foreground">
-              {filtered.length} of {opportunities.length} Opportunities
-            </h4>
-            <div className="flex items-center gap-2 flex-wrap">
-              <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
-              <Select value={filterClient} onValueChange={setFilterClient}>
-                <SelectTrigger className="w-[180px] h-8 text-xs">
-                  <SelectValue placeholder="All Clients" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">All Clients</SelectItem>
-                  {uniqueClients.map((c) => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={filterStage} onValueChange={setFilterStage}>
-                <SelectTrigger className="w-[180px] h-8 text-xs">
-                  <SelectValue placeholder="All Stages" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">All Stages</SelectItem>
-                  {uniqueStages.map((s) => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Input
-                placeholder="Search by name…"
-                value={filterName}
-                onChange={(e) => setFilterName(e.target.value)}
-                className="w-[200px] h-8 text-xs"
-              />
-            </div>
+      <PanelBody>
+        {opportunities.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
+            <AlertTriangle className="w-8 h-8 opacity-30" />
+            <p className="text-sm">No opportunities found.</p>
           </div>
+        ) : (
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Client Name</TableHead>
-                <TableHead>Opportunity Name</TableHead>
-                <TableHead>Sale Stage</TableHead>
+              <TableRow className="border-border/15 hover:bg-transparent">
+                <TableHead className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold h-9">Client</TableHead>
+                <TableHead className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold h-9">Opportunity</TableHead>
+                <TableHead className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold h-9">Stage</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((opp, i) => (
-                <TableRow key={i}>
-                  <TableCell className="font-medium">{opp.name}</TableCell>
-                  <TableCell>{opp.title}</TableCell>
-                  <TableCell>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                      {opp.source_stage}
-                    </span>
+                <TableRow key={i} className="border-border/10 hover:bg-surface-container transition-colors">
+                  <TableCell className="text-xs font-medium text-foreground py-2.5">{opp.name}</TableCell>
+                  <TableCell className="text-xs text-foreground py-2.5">{opp.title}</TableCell>
+                  <TableCell className="py-2.5">
+                    <Badge className="bg-primary/10 text-primary">{opp.source_stage}</Badge>
                   </TableCell>
                 </TableRow>
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground py-6">
+                  <TableCell colSpan={3} className="text-center text-xs text-muted-foreground py-8">
                     No opportunities match the current filters.
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
-        </div>
-      )}
-    </div>
+        )}
+      </PanelBody>
+    </Panel>
   );
 }
