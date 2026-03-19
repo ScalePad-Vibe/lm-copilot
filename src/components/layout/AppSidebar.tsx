@@ -3,9 +3,9 @@ import { RocketLaunchIcon, FlagIcon, CurrencyDollarIcon } from "@heroicons/react
 import { ScalePadLogo } from "@/components/ui/ScalePadLogo";
 
 const tools = [
-  { path: "/initiatives", icon: RocketLaunchIcon, label: "Initiative Manager" },
-  { path: "/goals",       icon: FlagIcon,          label: "Goal Manager"       },
-  { path: "/opportunities", icon: CurrencyDollarIcon, label: "Opportunities"  },
+  { path: "/initiatives", icon: RocketLaunchIcon, label: "Initiatives"   },
+  { path: "/goals",       icon: FlagIcon,          label: "Goals"         },
+  { path: "/opportunities", icon: CurrencyDollarIcon, label: "Opportunities" },
 ];
 
 export function AppSidebar() {
