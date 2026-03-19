@@ -269,7 +269,7 @@ export function GoalManagerWorkspace() {
 
   return (
     <>
-      <div className="flex gap-4 h-[calc(100vh-10rem)]">
+      <div className="flex gap-4 h-full">
 
         {/* LEFT PANEL — Library */}
         <div className="w-[40%] flex flex-col bg-surface border border-border/15 rounded-xl overflow-hidden">
