@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { proxyCall } from "@/lib/api-client";
 import { AlertTriangle, Filter } from "lucide-react";
 import {
   Table,
