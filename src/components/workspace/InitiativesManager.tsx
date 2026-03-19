@@ -212,10 +212,10 @@ export function InitiativesManager() {
         await deleteInitiative(apiKey, init.id);
         deleted++;
       } catch (e) {
-        toast({ title: `Failed to delete "${init.name}"`, description: e instanceof Error ? e.message : "Unknown error", variant: "destructive" });
+        toast.error(`Failed to delete "${init.name}"`, { description: e instanceof Error ? e.message : "Unknown error" });
       }
     }
-    if (deleted > 0) toast({ title: `${deleted} initiative(s) deleted` });
+    if (deleted > 0) toast.success(`${deleted} initiative(s) deleted`);
     setCheckedIds(new Set());
     setShowDeleteModal(false);
     setDeleting(false);

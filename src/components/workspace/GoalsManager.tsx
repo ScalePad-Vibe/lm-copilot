@@ -240,10 +240,10 @@ export function GoalsManager() {
     setUpdating(true);
     try {
       await updateGoal(apiKey, selectedGoal.id, form);
-      toast({ title: "Goal updated successfully" });
+      toast.success("Goal updated successfully");
       loadData();
     } catch (e) {
-      toast({ title: "Failed to update goal", description: e instanceof Error ? e.message : "Unknown error", variant: "destructive" });
+      toast.error("Failed to update goal", { description: e instanceof Error ? e.message : "Unknown error" });
     } finally {
       setUpdating(false);
     }
