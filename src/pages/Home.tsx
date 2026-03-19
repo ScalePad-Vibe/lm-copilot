@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Shell } from "@/components/layout/Shell";
 import { ArrowRightIcon, ClipboardDocumentIcon, CheckIcon, WrenchScrewdriverIcon } from "@heroicons/react/24/outline";
 import { ScalePadLogo } from "@/components/ui/ScalePadLogo";
 import { NAV_TOOLS } from "@/lib/constants";
-import { isBackendConfigured } from "@/lib/api-client";
+import { isBackendConfigured, isProxyDeployed } from "@/lib/api-client";
 
 // ─── Exact prompt remixers paste into Lovable ────────────────────────────────
 const SETUP_PROMPT =
