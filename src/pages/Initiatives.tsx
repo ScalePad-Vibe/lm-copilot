@@ -6,7 +6,7 @@ export default function Initiatives() {
   return (
     <Shell>
       <ApiKeyGate>
-        <InitiativeManagerWorkspace />
+        <InitiativesManager />
       </ApiKeyGate>
     </Shell>
   );

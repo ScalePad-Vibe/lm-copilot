@@ -6,7 +6,7 @@ export default function Goals() {
   return (
     <Shell>
       <ApiKeyGate>
-        <GoalManagerWorkspace />
+        <GoalsManager />
       </ApiKeyGate>
     </Shell>
   );
