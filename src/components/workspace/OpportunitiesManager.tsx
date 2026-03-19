@@ -107,7 +107,7 @@ export function OpportunitiesManager() {
             {uniqueStages.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
           <div className="flex-1 min-w-[160px]">
-            <PanelSearch value={filterName} onChange={setFilterName} placeholder="Search by name…" />
+            <PanelSearch value={filterName} onChange={setFilterName} placeholder="Search client or opportunity…" />
           </div>
         </div>
       </PanelHeader>
