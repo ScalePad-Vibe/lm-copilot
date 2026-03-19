@@ -24,7 +24,7 @@ export function AppSidebar() {
       <div className="flex items-center gap-2.5 px-4 h-16 border-b border-border/15 shrink-0">
         <img src={scalePadLogo} alt="ScalePad" className="h-[26px] w-auto object-contain shrink-0" />
         <div className="w-px h-4 bg-border/40 shrink-0" />
-        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">LMX Copilot</span>
+        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">LM Copilot</span>
       </div>
 
       {/* Nav */}
