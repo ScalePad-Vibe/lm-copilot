@@ -1,8 +1,22 @@
 # ScalePad App Marketplace — UX Rebuild Plan
 
-> **Status:** Planning  
-> **Goal:** Complete UI/UX redesign with no loss of API integration logic.  
+> **Status:** Design direction confirmed — ready to execute phase by phase.
+> **Goal:** Complete UI/UX redesign with no loss of API integration logic.
 > **Preserve:** All API calls, auth flow, data models, edge functions, and routing structure.
+
+---
+
+## 0. Design Inspiration Reference
+
+Four uploaded reference components define the aesthetic direction:
+
+| File | Key Takeaway |
+|---|---|
+| `Sidebar.tsx` | 256px always-expanded sidebar, `#1C1B1B` bg, gradient logo mark (indigo triangle), tight `tracking-tight` labels |
+| `TopBar.tsx` | Frosted glass (`backdrop-blur-xl bg-background/80`), gradient "Bulk Action" button, user chip with avatar |
+| `InitiativesTable.tsx` | Dense table: status dot clusters, mono revenue, 1px progress bar, actions fade in on row hover |
+| `GlobalStatusCard.tsx` | Floating card, `backdrop-blur-md`, MD3-style token naming, segmented progress bar |
+| `index.css` | Full Material Design 3 dark palette using Tailwind v4 `@theme` — rich surface layering system |
 
 ---
 
@@ -26,208 +40,265 @@
 
 | Layer | Current Problem | New Approach |
 |---|---|---|
-| Design tokens | Dark blue palette, generic Syne/DM Sans | New palette + font pairing (see §4) |
-| Login page | Two-column card, looks like a boilerplate SaaS | Single focused entry flow |
-| Shell layout | Fixed 240px sidebar + topbar — cramped, no breathing room | New shell: thinner rail nav + wider content area |
-| Marketplace | Card grid — OK but visually flat | Editorial list/grid with richer metadata |
-| App Detail | Long scrolling single page | Two-column: meta left, workspace right (no scroll fighting) |
-| Initiative Manager workspace | Dense, lots of chrome | Cleaned panels, better visual hierarchy |
-| Goal Manager workspace | Same as above | Same cleanup |
-| Admin panel | Plain table | Cleaner table, same functionality |
-| Settings page | Basic form | Cleaned layout |
+| Design tokens | Generic dark blue, Syne/DM Sans, shallow surface stack | MD3-inspired deep dark palette, Inter, rich surface layering |
+| Login page | Two-column card, boilerplate SaaS feel | Single column, frosted-glass card, API key primary |
+| Shell layout | Fixed 240px sidebar + flat topbar | 256px sidebar (always expanded) + frosted-glass topbar |
+| Marketplace | Flat card grid | Richer card with category badge, status dot, clean hover |
+| App Detail | Long single-column scroll | Two-column: meta/ratings left (30%) · workspace right (70%) |
+| Initiative / Goal workspace | Dense, lots of chrome | Cleaned panels matching InspiationsTable style |
+| Admin panel | Plain table | InitiativesTable-style: status dots, hover-reveal actions |
+| Settings | Basic form | Cleaned layout, same tokens |
 
 ---
 
-## 3. New UX Flows
+## 3. New Design System
 
-### 3.1 Entry / Auth
-```
-/ → /login
-
-Login page:
-  ┌─────────────────────────────────────┐
-  │  [Logo + product name]              │
-  │                                     │
-  │  "Enter your ScalePad API key"      │
-  │  [API Key input]  [Continue →]      │
-  │                                     │
-  │  ─── or ───                         │
-  │                                     │
-  │  [Admin Login]  (collapsed/link)    │
-  └─────────────────────────────────────┘
-```
-- Primary path is API key (80% of users)
-- Admin login is a secondary, de-emphasized link that expands inline
-- No tabs, no two-column layout
-- Show key masking preview as user types
-
-### 3.2 Shell / Navigation
-```
-┌──────┬──────────────────────────────────────────────┐
-│ rail │  [Topbar: breadcrumb + search + user chip]   │
-│      │                                              │
-│ 64px │  [Page content — full width, generous pad]  │
-│      │                                              │
-│      │                                              │
-└──────┴──────────────────────────────────────────────┘
-```
-- **Left rail** (64px): icon-only nav with tooltips. Expands to 220px on hover (CSS transition, no JS).
-  - Icons: Marketplace, Recent (clock), Admin (shield, admin only), Settings, Sign Out
-- **Topbar**: Shows breadcrumb trail (e.g. `Marketplace / Initiative Manager`), global search, and a user chip showing masked API key.
-- No category sidebar in shell — categories move to Marketplace page as horizontal chip strip below topbar.
-
-### 3.3 Marketplace
-```
-[Chip filter row: All | Planning | Reporting | ...]
-
-[App cards — 2 or 3 col grid]
-  ┌─────────────────────┐
-  │  🚀  Initiative Mgr │
-  │  Planning  · active │
-  │  Description...     │
-  │             [Open →]│
-  └─────────────────────┘
-```
-- Search stays in topbar
-- Category chips replace sidebar category list
-- Cards: icon, name, category badge, status dot, short description, launch button
-- Hover state lifts card (subtle shadow + border color transition)
-- Empty state with clear message when no results
-
-### 3.4 App Detail
-```
-┌─────────────────────────────────────────────────────┐
-│ ← Back   🚀 Initiative Manager   [active]  v1.0.0  │
-├──────────────────┬──────────────────────────────────┤
-│  Meta / Info     │  Workspace (Initiative/Goal Mgr  │
-│  (30%)           │  or generic MiniApp)  (70%)       │
-│                  │                                   │
-│  Description     │  [Full workspace component]       │
-│  How it works    │                                   │
-│  Endpoint        │                                   │
-│                  │                                   │
-│  ─────────────── │                                   │
-│  Ratings &       │                                   │
-│  Comments        │                                   │
-└──────────────────┴──────────────────────────────────┘
-```
-- Left column: static info + ratings/comments
-- Right column: full-height workspace — no need to scroll past app info to reach the tool
-
-### 3.5 Workspace Panels (Initiative / Goal Manager)
-Keep exact same panel layout (Library left 40% / Builder right 60%) but:
-- Reduce visual noise: tighter spacing, less border chrome
-- Table rows: cleaner, more generous row height
-- Buttons: consistent size/weight throughout
-- Modals: blur backdrop, cleaner close button
-- Status badges: pill shape, consistent across both workspaces
-
----
-
-## 4. New Design System
-
-### 4.1 Palette
-Shift from "generic dark SaaS blue" → **"slate + electric indigo"** — more editorial, higher contrast.
+### 3.1 Color Palette
+Based on the uploaded `index.css` MD3 dark palette, translated to **HSL variables** compatible with our existing Tailwind config and shadcn.
 
 ```css
-/* Background layers */
---background:       224 25% 6%;    /* near-black with slate hue */
---surface:          224 22% 9%;    /* cards, panels */
---surface-raised:   224 20% 13%;  /* inputs, dropdowns, hover */
+/* index.css — new :root block */
 
-/* Accent — electric indigo, punchier than current */
---primary:          245 85% 62%;   /* #5b5df6 family */
---primary-foreground: 0 0% 100%;
+/* ── Core layers (MD3 surface stack) ── */
+--background:              220 8% 7%;    /* #131313 */
+--surface:                 220 5% 11%;   /* #1C1B1B — sidebar, cards */
+--surface-raised:          220 5% 13%;   /* #202020 — inputs, dropdowns */
+--surface-container:       220 5% 16%;   /* #272626 — hover rows */
+--surface-container-high:  220 5% 19%;   /* #2A2A2A */
+--surface-container-highest: 220 5% 21%; /* #353534 — highest raised el */
 
-/* Status colors */
---success:          152 69% 45%;   /* green */
---warning:          35 95% 55%;    /* amber */
---destructive:      0 80% 58%;     /* red */
+/* ── Accent — indigo (from gradient #4D4AD5 → #332DBC) ── */
+--primary:                 242 64% 57%;  /* #4D4AD5 */
+--primary-dim:             244 62% 46%;  /* #332DBC — darker end of gradient */
+--primary-foreground:      0 0% 100%;
 
-/* Text */
---foreground:       220 20% 94%;
---muted-foreground: 220 10% 52%;
---border:           224 18% 16%;
+/* ── Text ── */
+--foreground:              20 5% 90%;    /* #E5E2E1 */
+--muted-foreground:        0 0% 57%;     /* #919191 / --outline */
+--on-surface-variant:      0 0% 78%;     /* #C6C6C6 */
+
+/* ── Borders ── */
+--border:                  0 0% 28% / 0.15;  /* #474747 at 15% — hairline */
+--border-subtle:           0 0% 28% / 0.08;  /* rows/table separators */
+
+/* ── Semantic ── */
+--success:                 152 69% 45%;  /* emerald-500 */
+--warning:                 38  92% 50%;  /* amber-500 */
+--destructive:             0   80% 58%;  /* rose-500 */
+--card:                    220 5% 11%;
+--card-foreground:         20  5% 90%;
+--popover:                 220 5% 13%;
+--popover-foreground:      20  5% 90%;
+--ring:                    242 64% 57%;
+--input:                   220 5% 16%;
+--radius:                  0.5rem;
+
+/* ── Sidebar tokens ── */
+--sidebar-background:      220 5% 11%;
+--sidebar-foreground:      20  5% 90%;
+--sidebar-primary:         242 64% 57%;
+--sidebar-border:          0 0% 28% / 0.15;
 ```
 
-### 4.2 Typography
-Replace Syne with **Space Grotesk** (heading) — still geometric but friendlier and more legible at small sizes. Keep **DM Sans** for body.
+### 3.2 Typography
+Matching the uploaded reference exactly:
 
 ```
-font-heading: "Space Grotesk", sans-serif  (weights 500, 600, 700)
-font-body:    "DM Sans", sans-serif        (weights 400, 500)
-font-mono:    "JetBrains Mono", monospace  (for endpoints, keys)
+font-sans / font-body:    "Inter", ui-sans-serif        (weights 400, 500, 600, 700)
+font-mono:                "JetBrains Mono", monospace    (endpoints, API keys, numbers)
 ```
 
-### 4.3 Spacing & Radius
-- Base radius: `6px` (slightly tighter than current `8px`)
-- Content max-width: `1400px`
-- Default page padding: `px-8 py-6`
-- Card padding: `p-5`
+> **Note**: Drop Syne and DM Sans. Inter is used for both headings and body in the reference. Apply `tracking-tight` to headings, `tracking-widest` to uppercase micro-labels.
 
-### 4.4 New Animations
-- Page enter: `fadeUp` (Y: 12px → 0, opacity 0→1, 250ms ease-out)
-- Card hover: `translateY(-2px)` + shadow intensify (150ms)
-- Modal: scale from 0.97 → 1 + fade (200ms)
+Google Fonts import (add to `index.html`):
+```html
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+```
 
-### 4.5 Component Tokens to Add
+### 3.3 Key Visual Patterns (from reference)
+
+| Pattern | Implementation |
+|---|---|
+| Frosted glass surfaces | `bg-background/80 backdrop-blur-xl` |
+| Primary gradient button | `bg-gradient-to-br from-primary to-primary-dim` |
+| Indigo logo mark | `w-8 h-8 rounded bg-gradient-to-br from-primary to-primary-dim` |
+| Table headers | `text-[10px] uppercase tracking-widest font-bold text-muted-foreground` |
+| Row hover | `hover:bg-surface-container transition-colors group` |
+| Action fade-in | `opacity-0 group-hover:opacity-100 transition-opacity` |
+| Status dots | `w-3 h-3 rounded-full bg-emerald-500/80` (Done), amber (In Progress), rose (Blocked) |
+| Progress bar | `h-1 bg-surface-container-highest rounded-full` with `bg-primary` fill |
+| Category badges | `px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-tight` |
+| Mono data | `font-mono font-medium` for numbers, keys, endpoints |
+| Dividers | `border-border/15` — very subtle hairlines |
+| Card float | `backdrop-blur-md bg-surface/90 rounded-xl border border-border/20 shadow-2xl` |
+
+### 3.4 Animations
+
 ```css
---card-hover-border: hsl(var(--primary) / 0.35);
---badge-planning:    hsl(245 85% 62% / 0.15);   /* indigo */
---badge-reporting:   hsl(152 69% 45% / 0.15);   /* green */
---gradient-hero:     linear-gradient(135deg, hsl(245 85% 62% / 0.08), transparent);
+/* Add to tailwind.config.ts keyframes */
+"fade-up":   { from: { opacity: "0", transform: "translateY(12px)" }, to: { opacity: "1", transform: "translateY(0)" } }
+"scale-in":  { from: { opacity: "0", transform: "scale(0.97)" },      to: { opacity: "1", transform: "scale(1)" } }
+"slide-in":  { from: { opacity: "0", transform: "translateX(-12px)" }, to: { opacity: "1", transform: "translateX(0)" } }
 ```
 
 ---
 
-## 5. Page-by-Page Rebuild Checklist
+## 4. New UX Flows
 
-### Phase 1 — Design System Foundation
-- [ ] Update `index.css` with new CSS variables (palette, tokens)
-- [ ] Update `tailwind.config.ts` with new font families + color extensions
-- [ ] Add Google Fonts: Space Grotesk + JetBrains Mono
-- [ ] Update `index.html` font preload links
+### 4.1 Shell Layout
+```
+┌────────────────────────────────────────────────────────────┐
+│ Sidebar (256px fixed)  │  Topbar (frosted, fixed h-16)     │
+│                        ├────────────────────────────────── │
+│  [▽ Logo]              │                                   │
+│  Marketplace           │  [Page content]                   │
+│  Recent: App A         │  max-w-screen-xl, px-8 py-6       │
+│  ─────────────────     │                                   │
+│  Admin Panel           │                                   │
+│  Settings              │                                   │
+│  ─────────────────     │                                   │
+│  [API key masked]      │                                   │
+│  [Sign Out]            │                                   │
+└────────────────────────┴───────────────────────────────────┘
+```
+
+**Sidebar** (`#1C1B1B` / `bg-surface`):
+- Logo mark: `w-8 h-8` gradient indigo square with icon
+- Nav items: `text-sm tracking-tight`, icon 18px, active = `bg-surface-container-highest text-foreground font-semibold`
+- Bottom section: API key masked in mono, Sign Out link
+
+**Topbar** (`bg-background/80 backdrop-blur-xl border-b border-border/15`):
+- Left: Search input (`bg-surface border-none rounded-md`, focus ring indigo)
+- Right: Notification bell + user chip (avatar + masked key)
+- Admin users: gradient "Add App" or "Bulk Action" button visible
+
+### 4.2 Login Page
+```
+┌─────────────────────────────────────────┐
+│                                         │
+│  [▽ Logo mark]  ScalePad                │
+│     App Marketplace                     │
+│                                         │
+│  "Enter your ScalePad API key           │
+│   to get started"                       │
+│                                         │
+│  [API Key Input ─────────────────────]  │
+│  [Continue →  (gradient button)      ]  │
+│                                         │
+│  ── or ──                               │
+│                                         │
+│  [Admin Login ▾] (expandable)           │
+│    email + password + Sign In           │
+│                                         │
+└─────────────────────────────────────────┘
+```
+- Centered card with `backdrop-blur-md`, `bg-surface/90`, `rounded-xl`
+- Dark full-bleed background, subtle radial gradient behind card
+- API key input: `font-mono`, shows live masked preview as user types
+- Admin section collapses/expands with smooth animation
+
+### 4.3 Marketplace
+- Category chips below topbar (horizontal scroll): `All | Planning | Reporting | ...`
+- App cards: 2-col grid, each card `bg-surface rounded-xl border border-border/20 p-5`
+  - Icon (emoji, 40px) + Name (font-semibold) + category badge + status dot
+  - Description (2 lines max, clamp)
+  - Footer: author · version · `Open →` button (ghost)
+  - Hover: `hover:border-primary/30 hover:bg-surface-container transition-all`
+
+### 4.4 App Detail
+```
+┌─────────────────────┬───────────────────────────────────────┐
+│ Meta (30%)          │ Workspace (70%)                       │
+│                     │                                       │
+│ ← Back              │ [Full workspace component fills       │
+│ 🚀 Initiative Mgr   │  this column — Initiative/Goal/Mini] │
+│ [active] v1.0.0     │                                       │
+│                     │                                       │
+│ Description         │                                       │
+│                     │                                       │
+│ How it works        │                                       │
+│                     │                                       │
+│ Endpoint (mono)     │                                       │
+│                     │                                       │
+│ ─────────────────── │                                       │
+│ ★ Ratings &         │                                       │
+│   Comments          │                                       │
+└─────────────────────┴───────────────────────────────────────┘
+```
+Both columns are full-height and independently scrollable.
+
+### 4.5 Initiative / Goal Workspace
+Keep the 40/60 Library/Builder split. Visual cleanup only:
+- Library table headers: `text-[10px] uppercase tracking-widest` (reference style)
+- Row hover: `group` + `hover:bg-surface-container`
+- Action buttons (edit, delete): `opacity-0 group-hover:opacity-100`
+- Status badges: pill style from reference (`rounded-full text-[10px] font-bold uppercase`)
+- Progress bars: `h-1` slim bars matching reference
+- Deploy button: full-width gradient (`from-primary to-primary-dim`)
+- Deployment modal: `backdrop-blur-md`, `scale-in` animation
+
+### 4.6 Admin Panel
+Restyle table to match `InitiativesTable.tsx` reference:
+- Same `text-[10px] uppercase tracking-widest` headers
+- Category color badges
+- Actions fade in on row hover (`group-hover:opacity-100`)
+- Same border treatment: `border-border/15` headers, `border-border/5` rows
+
+---
+
+## 5. Phase-by-Phase Checklist
+
+### Phase 1 — Design Foundation *(start here)*
+- [ ] Update `index.html` with Inter + JetBrains Mono Google Fonts
+- [ ] Rewrite `src/index.css` — new HSL token block (palette above)
+- [ ] Update `tailwind.config.ts` — new fonts, new animation keyframes, surface-container color tokens
 
 ### Phase 2 — Shell
-- [ ] Rebuild `Sidebar.tsx` → new icon rail with hover-expand
-- [ ] Rebuild `Topbar.tsx` → breadcrumb + search + user chip
+- [ ] Rebuild `src/components/layout/Sidebar.tsx` — gradient logo mark, reference nav style
+- [ ] Rebuild `src/components/layout/Topbar.tsx` — frosted glass, gradient button, user chip
 
 ### Phase 3 — Pages
-- [ ] Rebuild `Login.tsx` — single column, API key primary, admin secondary
-- [ ] Rebuild `Marketplace.tsx` — category chips + card grid
-- [ ] Rebuild `AppDetail.tsx` — two-column meta/workspace layout
-- [ ] Clean `Admin.tsx` — same table, better styling
-- [ ] Clean `Settings.tsx` — same form, better layout
+- [ ] Rebuild `src/pages/Login.tsx` — centered frosted card, API key primary, admin expand
+- [ ] Rebuild `src/pages/Marketplace.tsx` — category chips + richer cards
+- [ ] Rebuild `src/pages/AppDetail.tsx` — two-column meta/workspace
+- [ ] Restyle `src/pages/Admin.tsx` — InitiativesTable-style table
+- [ ] Restyle `src/pages/Settings.tsx` — cleaned layout
 
-### Phase 4 — Workspace Cleanup (no logic changes)
-- [ ] Clean `InitiativeManagerWorkspace.tsx` — visual polish only
-- [ ] Clean `GoalManagerWorkspace.tsx` — visual polish only
-- [ ] Review `AppRatingsComments.tsx` — consistent with new system
+### Phase 4 — Workspace Visual Polish *(no logic changes)*
+- [ ] `src/components/workspace/InitiativeManagerWorkspace.tsx` — table + badges + deploy button
+- [ ] `src/components/workspace/GoalManagerWorkspace.tsx` — same cleanup
+- [ ] `src/components/marketplace/AppRatingsComments.tsx` — consistent tokens
 
 ### Phase 5 — QA
-- [ ] Verify all API calls still work (proxy, pagination, deploy flow)
-- [ ] Verify admin login / Supabase auth still works
-- [ ] Verify ratings + comments still work
+- [ ] All ScalePad API calls still work (proxy, pagination, deploy flow)
+- [ ] Admin login / Supabase auth still works
+- [ ] Ratings + comments still work
 - [ ] Responsive check at 1280px, 1440px, 1920px
 
 ---
 
-## 6. What We Will NOT Do
-- No changes to routing logic
-- No changes to API helper files
-- No changes to edge functions
-- No changes to database schema
-- No new pages or features during the visual rebuild
-- No mobile/responsive overhaul (desktop-first tool, same as now)
+## 6. Firm Constraints
+- No routing changes
+- No API helper changes
+- No edge function changes
+- No DB schema changes
+- No new features during the visual rebuild
+- Desktop-first (same as today, no mobile overhaul)
 
 ---
 
-## 7. Open Questions Before Starting
-1. **Color direction**: Slate+indigo as above, or a different accent (e.g. teal, violet, warm amber)?
-2. **Rail nav**: Icon-only with hover-expand, or always-expanded (current style but cleaned up)?
-3. **App detail layout**: Two-column as proposed, or keep the current single-column scroll?
-4. **Workspace panels**: Keep the current 40/60 split or change proportions?
+## 7. Decisions Made
+
+| Question | Decision |
+|---|---|
+| Color accent | Indigo `#4D4AD5 → #332DBC` gradient (from reference) |
+| Sidebar style | Always-expanded 256px (matches reference `Sidebar.tsx`) |
+| App detail layout | Two-column — meta left (30%) / workspace right (70%) |
+| Workspace split | Keep 40/60 Library / Builder |
+| Font | Inter only (drop Syne/DM Sans) — matches reference |
+| Surface depth | Full MD3 surface stack (5 levels) from uploaded `index.css` |
 
 ---
 
-*Created: 2026-03-19 | Status: Awaiting design direction confirmation before Phase 1.*
+*Updated: 2026-03-19 — Design direction confirmed. Ready to start Phase 1.*
