@@ -613,7 +613,7 @@ export function InitiativesManager() {
               Deploy Initiative to {selectedClientIds.length} Client{selectedClientIds.length !== 1 ? "s" : ""}
             </button>
           </div>
-        </div>
+        </Panel>
       </div>
 
       {/* DEPLOY CONFIRMATION DIALOG */}

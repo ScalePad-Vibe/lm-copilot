@@ -512,7 +512,7 @@ export function GoalsManager() {
               Deploy Goal to {selectedClientIds.length} Client{selectedClientIds.length !== 1 ? "s" : ""}
             </button>
           </div>
-        </div>
+        </Panel>
       </div>
 
       {/* DEPLOY CONFIRMATION DIALOG */}
