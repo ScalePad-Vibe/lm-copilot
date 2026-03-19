@@ -1,4 +1,14 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/context/AuthContext";
 import {
   fetchAllInitiatives,
