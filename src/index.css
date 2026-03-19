@@ -4,40 +4,54 @@
 
 @layer base {
   :root {
-    --background: 222 31% 6%;
-    --foreground: 228 28% 93%;
-    --card: 222 29% 10%;
-    --card-foreground: 228 28% 93%;
-    --popover: 226 30% 14%;
-    --popover-foreground: 228 28% 93%;
-    --primary: 229 90% 64%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 226 30% 14%;
-    --secondary-foreground: 228 28% 93%;
-    --muted: 229 28% 19%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 229 90% 64%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 229 28% 19%;
-    --input: 229 28% 19%;
-    --ring: 229 90% 64%;
-    --radius: 0.5rem;
+    /* ── Surface stack (MD3-inspired, 5 levels deep) ── */
+    --background:                  220 8% 7%;
+    --surface:                     220 5% 11%;
+    --surface-raised:              220 5% 13%;
+    --surface-container:           220 5% 16%;
+    --surface-container-high:      220 5% 19%;
+    --surface-container-highest:   220 5% 21%;
 
-    --surface: 222 29% 10%;
-    --surface-raised: 226 30% 14%;
-    --success: 142 71% 45%;
-    --warning: 38 92% 50%;
+    /* ── Accent — indigo gradient ── */
+    --primary:                     242 64% 57%;
+    --primary-dim:                 244 62% 46%;
+    --primary-foreground:          0 0% 100%;
 
-    --sidebar-background: 222 29% 10%;
-    --sidebar-foreground: 228 28% 93%;
-    --sidebar-primary: 229 90% 64%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 226 30% 14%;
-    --sidebar-accent-foreground: 228 28% 93%;
-    --sidebar-border: 229 28% 19%;
-    --sidebar-ring: 229 90% 64%;
+    /* ── Text ── */
+    --foreground:                  20 5% 90%;
+    --muted-foreground:            0 0% 57%;
+    --on-surface-variant:          0 0% 78%;
+
+    /* ── Semantic ── */
+    --card:                        220 5% 11%;
+    --card-foreground:             20 5% 90%;
+    --popover:                     220 5% 13%;
+    --popover-foreground:          20 5% 90%;
+    --secondary:                   220 5% 16%;
+    --secondary-foreground:        20 5% 90%;
+    --muted:                       220 5% 16%;
+    --accent:                      242 64% 57%;
+    --accent-foreground:           0 0% 100%;
+    --destructive:                 0 80% 58%;
+    --destructive-foreground:      0 0% 100%;
+    --success:                     152 69% 45%;
+    --warning:                     38 92% 50%;
+
+    /* ── Borders & inputs ── */
+    --border:                      0 0% 28%;
+    --input:                       220 5% 16%;
+    --ring:                        242 64% 57%;
+    --radius:                      0.5rem;
+
+    /* ── Sidebar tokens ── */
+    --sidebar-background:          220 5% 11%;
+    --sidebar-foreground:          20 5% 90%;
+    --sidebar-primary:             242 64% 57%;
+    --sidebar-primary-foreground:  0 0% 100%;
+    --sidebar-accent:              220 5% 16%;
+    --sidebar-accent-foreground:   20 5% 90%;
+    --sidebar-border:              0 0% 28%;
+    --sidebar-ring:                242 64% 57%;
   }
 }
 
@@ -46,25 +60,19 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-body antialiased;
+    @apply bg-background text-foreground font-sans antialiased;
   }
   h1, h2, h3, h4, h5, h6 {
-    @apply font-heading;
+    @apply font-sans tracking-tight;
   }
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: hsl(var(--background));
-}
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted));
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground));
-}
+/* ── Scrollbar ── */
+::-webkit-scrollbar        { width: 5px; height: 5px; }
+::-webkit-scrollbar-track  { background: hsl(var(--background)); }
+::-webkit-scrollbar-thumb  { background: hsl(var(--border) / 0.4); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--border) / 0.7); }
+
+/* ── No-scrollbar utility ── */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
