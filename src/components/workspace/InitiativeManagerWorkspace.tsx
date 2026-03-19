@@ -72,47 +72,8 @@ function emptyForm(): TemplateForm {
   };
 }
 
-// --- Sub-components ---
-
-function Badge({ children, className }: { children: React.ReactNode; className?: string }) {
-  return (
-    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${className}`}>
-      {children}
-    </span>
-  );
-}
-
-function StepIcon({ status }: { status: StepStatus }) {
-  if (status === "success") return <CheckCircle2 className="w-4 h-4 text-success" />;
-  if (status === "error") return <XCircle className="w-4 h-4 text-destructive" />;
-  if (status === "running") return <Loader2 className="w-4 h-4 text-primary animate-spin" />;
-  return <Clock className="w-4 h-4 text-muted-foreground" />;
-}
-
-function Pagination({ page, totalPages, onPageChange }: { page: number; totalPages: number; onPageChange: (p: number) => void }) {
-  if (totalPages <= 1) return null;
-  return (
-    <div className="flex items-center justify-between px-3 py-2 border-t border-border">
-      <button
-        onClick={() => onPageChange(page - 1)}
-        disabled={page <= 1}
-        className="text-xs text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
-      >
-        <ChevronLeft className="w-3 h-3" /> Prev
-      </button>
-      <span className="text-[10px] text-muted-foreground">Page {page} of {totalPages}</span>
-      <button
-        onClick={() => onPageChange(page + 1)}
-        disabled={page >= totalPages}
-        className="text-xs text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
-      >
-        Next <ChevronRight className="w-3 h-3" />
-      </button>
-    </div>
-  );
-}
-
 // --- Main Component ---
+
 
 export function InitiativeManagerWorkspace() {
   const { apiKey } = useAuth();
