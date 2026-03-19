@@ -69,30 +69,27 @@ export default function Home() {
 
         {/* Tool cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {tools.map(({ path, icon: Icon, label, category, accent, iconColor, description }) => (
+        {tools.map(({ path, icon: Icon, label, category, description }) => (
             <div
               key={path}
               onClick={() => navigate(path)}
-              className="relative bg-surface rounded-2xl border border-border/20 p-6 flex flex-col gap-5 cursor-pointer hover:border-primary/30 hover:bg-surface-container transition-all duration-200 group overflow-hidden"
+              className="bg-surface rounded-2xl border border-border/20 p-6 flex flex-col gap-5 cursor-pointer hover:border-border/40 hover:bg-surface-raised transition-all duration-200 group"
             >
-              {/* Subtle gradient glow top-left */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${accent} opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none`} />
-
-              <div className="relative flex items-start justify-between">
-                <div className={`w-14 h-14 rounded-2xl bg-surface-container-highest flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-200`}>
-                  <Icon className={`w-7 h-7 ${iconColor}`} />
+              <div className="flex items-start justify-between">
+                <div className="w-14 h-14 rounded-2xl bg-surface-container flex items-center justify-center shrink-0">
+                  <Icon className="w-7 h-7 text-muted-foreground" />
                 </div>
                 <span className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground bg-surface-container px-2.5 py-1 rounded-full">
                   {category}
                 </span>
               </div>
 
-              <div className="relative flex-1 space-y-1.5">
+              <div className="flex-1 space-y-1.5">
                 <h3 className="text-sm font-semibold tracking-tight">{label}</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
               </div>
 
-              <div className="relative flex items-center gap-1.5 text-xs font-semibold text-primary group-hover:gap-2.5 transition-all duration-150">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground group-hover:text-foreground group-hover:gap-2.5 transition-all duration-150">
                 Launch <ArrowRightIcon className="w-3.5 h-3.5" />
               </div>
             </div>
