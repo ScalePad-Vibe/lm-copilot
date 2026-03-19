@@ -55,10 +55,10 @@ export function ApiKeyPrompt({ onDismiss }: ApiKeyPromptProps) {
         />
         <button
           onClick={handleConnect}
-          disabled={!key.trim() || saving}
+          disabled={!key.trim()}
           className="w-full h-9 bg-gradient-to-br from-primary to-primary-dim text-primary-foreground text-sm font-semibold rounded-md disabled:opacity-40 flex items-center justify-center gap-2 transition-opacity"
         >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Connect & Launch"}
+          Connect &amp; Launch
         </button>
         {onDismiss && (
           <button
