@@ -4,7 +4,7 @@ import { GoalManagerWorkspace } from "@/components/workspace/GoalManagerWorkspac
 
 export default function Goals() {
   return (
-    <Shell title="Goal Manager">
+    <Shell>
       <ApiKeyGate>
         <GoalManagerWorkspace />
       </ApiKeyGate>

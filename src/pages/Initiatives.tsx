@@ -4,7 +4,7 @@ import { InitiativeManagerWorkspace } from "@/components/workspace/InitiativeMan
 
 export default function Initiatives() {
   return (
-    <Shell title="Initiative Manager">
+    <Shell>
       <ApiKeyGate>
         <InitiativeManagerWorkspace />
       </ApiKeyGate>

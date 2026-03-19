@@ -8,7 +8,7 @@ export default function Home() {
   const navigate = useNavigate();
 
   return (
-    <Shell title="Tools">
+    <Shell>
       <div className="h-full overflow-y-auto px-8 py-10 space-y-10 animate-fade-up">
 
         {/* Header */}
