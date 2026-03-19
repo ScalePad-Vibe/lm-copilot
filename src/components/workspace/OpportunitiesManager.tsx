@@ -53,17 +53,9 @@ export function OpportunitiesManager() {
     setError(null);
     setOpportunities([]);
     try {
-      const { data: json, error: fnError } = await supabase.functions.invoke("scalepad-proxy", {
-        body: { endpoint: "/core/v1/opportunities?page_size=200", method: "GET" },
-        headers: { "x-scalepad-api-key": apiKey },
-      });
-      if (fnError) throw new Error(fnError.message || "Edge function error");
-      if (json?.upstream_status && json.upstream_status !== 200) {
-        throw new Error(json.errors?.[0]?.detail || json.error || `API returned ${json.upstream_status}`);
-      }
-      if (json?.error) throw new Error(json.error);
+      const json = await proxyCall(apiKey, "/core/v1/opportunities?page_size=200");
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const items: Opportunity[] = (json.data || json.items || json || []).map((item: any) => ({
+      const items: Opportunity[] = ((json.data || json.items || []) as any[]).map((item: any) => ({
         name: item.client?.name ?? item.name ?? "—",
         title: item.title ?? "—",
         source_stage: item.source_stage ?? "—",
