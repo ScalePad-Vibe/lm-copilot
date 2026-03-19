@@ -338,31 +338,9 @@ export function InitiativeManagerWorkspace() {
 
   // --- Render ---
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 gap-3">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
-        <p className="text-sm text-muted-foreground">{loadingText}</p>
-      </div>
-    );
-  }
+  if (loading) return <WorkspaceLoader message={loadingText} />;
+  if (loadError) return <WorkspaceError message={loadError} onRetry={loadData} />;
 
-  if (loadError) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 gap-4">
-        <AlertTriangle className="w-10 h-10 text-destructive" />
-        <p className="text-sm text-foreground">{loadError}</p>
-        <button
-          onClick={loadData}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90"
-        >
-          Retry
-        </button>
-      </div>
-    );
-  }
-
-  return (
     <>
       <div className="flex gap-4 min-h-[600px]">
         {/* LEFT PANEL — Initiative Library */}
