@@ -35,7 +35,7 @@ import {
   ChevronRight,
   Pencil,
 } from "lucide-react";
-import { Badge, StepIcon, Pagination, WorkspaceLoader, WorkspaceError } from "@/components/workspace/Shared";
+import { Badge, StepIcon, Pagination, WorkspaceLoader, WorkspaceError, Panel, PanelHeader, PanelLabel, PanelSearch, PanelBody, PanelEmpty, smallSelectCls } from "@/components/workspace/Shared";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 
