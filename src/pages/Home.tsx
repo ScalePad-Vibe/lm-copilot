@@ -9,7 +9,7 @@ export default function Home() {
 
   return (
     <Shell>
-      <div className="h-full flex flex-col justify-center px-8 py-10 space-y-10 animate-fade-up">
+      <div className="h-full overflow-y-auto px-8 pt-6 pb-10 space-y-8 animate-fade-up">
 
         {/* Header */}
         <div className="flex items-center gap-4">
