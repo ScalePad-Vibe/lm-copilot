@@ -43,14 +43,7 @@ export default function Home() {
         <div className="flex items-center gap-4">
           <ScalePadLogo className="h-9 w-auto text-foreground shrink-0" />
           <div className="w-px h-8 bg-border/40 shrink-0" />
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">LM Copilot</span>
-            </div>
-            <p className="text-muted-foreground text-sm mt-0.5 leading-snug">
-              Connect to ScalePad to automate customer success.
-            </p>
-          </div>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">LM Copilot</span>
         </div>
 
         {/* API key nudge */}
