@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { MarketplaceApp } from "@/lib/constants";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Play, AlertTriangle, Filter } from "lucide-react";
 import {
@@ -26,11 +25,7 @@ interface Opportunity {
   source_stage: string;
 }
 
-interface OpportunitiesWorkspaceProps {
-  app: MarketplaceApp;
-}
-
-export function OpportunitiesWorkspace({ app }: OpportunitiesWorkspaceProps) {
+export function OpportunitiesWorkspace() {
   const { apiKey } = useAuth();
   const [loading, setLoading] = useState(false);
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
@@ -110,7 +105,7 @@ export function OpportunitiesWorkspace({ app }: OpportunitiesWorkspaceProps) {
       <div className="bg-card border border-border rounded-lg p-5 space-y-4">
         <h3 className="font-heading font-bold text-sm text-foreground">Workspace</h3>
         <p className="text-xs text-muted-foreground">
-          This app calls the live ScalePad API using your API key. Click Run to fetch opportunities.
+          Calls the live ScalePad API using your API key. Click Run to fetch opportunities.
         </p>
 
         <button
@@ -126,13 +121,12 @@ export function OpportunitiesWorkspace({ app }: OpportunitiesWorkspaceProps) {
           ) : (
             <>
               <Play className="w-4 h-4" />
-              Run App
+              Run
             </>
           )}
         </button>
       </div>
 
-      {/* Results */}
       {loading && (
         <div className="bg-card border border-border rounded-lg p-8 flex flex-col items-center justify-center gap-3 animate-fade-in">
           <Loader2 className="w-8 h-8 text-primary animate-spin" />

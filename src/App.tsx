@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/context/AuthContext";
@@ -24,9 +24,6 @@ const App = () => (
             <Route path="/goals"          element={<Goals />} />
             <Route path="/opportunities"  element={<Opportunities />} />
             <Route path="/settings"       element={<SettingsPage />} />
-            {/* Legacy redirects */}
-            <Route path="/marketplace"    element={<Navigate to="/" replace />} />
-            <Route path="/marketplace/*"  element={<Navigate to="/" replace />} />
             <Route path="*"              element={<NotFound />} />
           </Routes>
         </BrowserRouter>
