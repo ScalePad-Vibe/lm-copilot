@@ -21,13 +21,31 @@ export function Topbar() {
   const location = useLocation();
 
   const currentTool = NAV_TOOLS.find((t) => t.path === location.pathname);
-  const title = currentTool?.label ?? "Tools";
 
   return (
     <>
       <header className="h-16 border-b border-border/15 bg-background/80 backdrop-blur-xl flex items-center justify-between px-6 shrink-0 z-20">
-        <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
 
+        {/* Tool identity */}
+        {currentTool ? (
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/15 border border-primary/20 shrink-0">
+              <currentTool.icon className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold tracking-tight leading-none mb-0.5">
+                {currentTool.label}
+              </span>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground/60">
+                {currentTool.category}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <span className="text-sm font-semibold tracking-tight">Tools</span>
+        )}
+
+        {/* Connection status */}
         {hasApiKey ? (
           <button
             onClick={() => setShowDisconnect(true)}
