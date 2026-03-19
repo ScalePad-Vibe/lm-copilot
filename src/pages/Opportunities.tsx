@@ -4,7 +4,7 @@ import { OpportunitiesWorkspace } from "@/components/workspace/OpportunitiesWork
 
 export default function Opportunities() {
   return (
-    <Shell title="List Opportunities">
+    <Shell>
       <ApiKeyGate>
         <div className="h-full overflow-y-auto p-6">
           <OpportunitiesWorkspace />
