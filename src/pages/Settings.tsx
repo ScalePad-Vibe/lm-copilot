@@ -1,58 +1,23 @@
 import { useAuth } from "@/context/AuthContext";
 import { useAppStore } from "@/context/AppStoreContext";
 import { maskApiKey } from "@/lib/scalepad-api";
-import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/layout/Sidebar";
-
 import { useState } from "react";
-import { toast } from "sonner";
-import { Download, Upload, RotateCcw } from "lucide-react";
+import { KeyRound, Trash2 } from "lucide-react";
 
 export default function SettingsPage() {
-  const { apiKey, role, logout } = useAuth();
-  const { apps, resetToDefaults } = useAppStore();
-  const navigate = useNavigate();
+  const { apiKey, hasApiKey, setApiKey, clearApiKey } = useAuth();
+  const { apps } = useAppStore();
   const [category, setCategory] = useState("All");
+  const [newKey, setNewKey] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  const handleChangeKey = () => {
-    logout();
-    navigate("/login");
-  };
-
-  const handleExport = () => {
-    const blob = new Blob([JSON.stringify(apps, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "scalepad-app-registry.json";
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Registry exported");
-  };
-
-  const handleImport = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".json";
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const data = JSON.parse(reader.result as string);
-          if (Array.isArray(data)) {
-            localStorage.setItem("sp_apps", JSON.stringify(data));
-            toast.success("Registry imported — reload to see changes");
-            window.location.reload();
-          }
-        } catch {
-          toast.error("Invalid JSON file");
-        }
-      };
-      reader.readAsText(file);
-    };
-    input.click();
+  const handleSaveKey = async () => {
+    if (!newKey.trim()) return;
+    setSaving(true);
+    await setApiKey(newKey.trim());
+    setNewKey("");
+    setSaving(false);
   };
 
   return (
@@ -60,52 +25,57 @@ export default function SettingsPage() {
       <Sidebar selectedCategory={category} onCategoryChange={setCategory} apps={apps} />
 
       <div className="ml-60 flex-1 flex flex-col min-h-screen">
-        
-        <header className="h-16 border-b border-border bg-surface flex items-center px-6 shrink-0">
-          <h2 className="text-lg font-heading font-bold">Settings</h2>
+        <header className="h-16 border-b border-border/15 bg-background/80 backdrop-blur-xl flex items-center px-6 shrink-0 sticky top-0 z-20">
+          <h2 className="text-sm font-semibold tracking-tight">Settings</h2>
         </header>
 
-        <main className="flex-1 p-6 space-y-6 overflow-y-auto max-w-2xl">
-          {/* API Key */}
-          <div className="bg-card border border-border rounded-lg p-5 space-y-3">
-            <h3 className="font-heading font-bold text-sm">API Key</h3>
-            <div className="flex items-center gap-3">
-              <span className="w-2 h-2 rounded-full bg-success shrink-0" />
-              <code className="text-sm text-muted-foreground font-mono">{maskApiKey(apiKey)}</code>
+        <main className="flex-1 p-6 overflow-y-auto max-w-xl">
+          <div className="bg-surface rounded-xl border border-border/20 p-5 space-y-4">
+            <div className="flex items-center gap-2">
+              <KeyRound className="w-4 h-4 text-muted-foreground" />
+              <h3 className="text-sm font-semibold tracking-tight">ScalePad API Key</h3>
             </div>
-            <button
-              onClick={handleChangeKey}
-              className="h-9 px-4 bg-surface-raised border border-border rounded-md text-sm text-foreground hover:bg-muted/50 transition-colors duration-150"
-            >
-              Change API Key
-            </button>
-          </div>
 
-          {/* Admin section */}
-          {role === "admin" && (
-            <div className="bg-card border border-border rounded-lg p-5 space-y-4">
-              <h3 className="font-heading font-bold text-sm">Admin Tools</h3>
-              <div className="flex flex-wrap gap-3">
-                <button onClick={handleExport}
-                  className="h-9 px-4 bg-surface-raised border border-border rounded-md text-sm text-foreground hover:bg-muted/50 flex items-center gap-1.5 transition-colors duration-150">
-                  <Download className="w-4 h-4" /> Export Registry
-                </button>
-                <button onClick={handleImport}
-                  className="h-9 px-4 bg-surface-raised border border-border rounded-md text-sm text-foreground hover:bg-muted/50 flex items-center gap-1.5 transition-colors duration-150">
-                  <Upload className="w-4 h-4" /> Import Registry
-                </button>
-                <button onClick={() => {
-                  if (confirm("Reset all apps to defaults?")) resetToDefaults();
-                }}
-                  className="h-9 px-4 bg-destructive/10 border border-destructive/20 rounded-md text-sm text-destructive hover:bg-destructive/20 flex items-center gap-1.5 transition-colors duration-150">
-                  <RotateCcw className="w-4 h-4" /> Reset to Defaults
+            {hasApiKey ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2.5 p-3 bg-surface-container rounded-lg">
+                  <span className="w-1.5 h-1.5 rounded-full bg-success shrink-0" />
+                  <code className="text-sm text-foreground font-mono flex-1">{maskApiKey(apiKey)}</code>
+                  <span className="text-[10px] uppercase tracking-widest text-success font-bold">Connected</span>
+                </div>
+                <button
+                  onClick={clearApiKey}
+                  className="flex items-center gap-1.5 text-sm text-destructive hover:text-destructive/80 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Disconnect key
                 </button>
               </div>
-              <p className="text-[11px] text-muted-foreground">
-                Note: admin password change requires Supabase Auth (not available in POC).
-              </p>
-            </div>
-          )}
+            ) : (
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Enter your ScalePad API key to enable app workspaces. Your key is stored in session storage only and never sent to any server other than the ScalePad API.
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="password"
+                    value={newKey}
+                    onChange={(e) => setNewKey(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSaveKey()}
+                    placeholder="sk-…"
+                    className="flex-1 h-9 px-3 bg-surface-container border-none rounded-md text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                  <button
+                    onClick={handleSaveKey}
+                    disabled={!newKey.trim() || saving}
+                    className="h-9 px-4 bg-gradient-to-br from-primary to-primary-dim text-primary-foreground text-sm font-semibold rounded-md disabled:opacity-40 transition-opacity"
+                  >
+                    {saving ? "Saving…" : "Connect"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </main>
       </div>
     </div>
