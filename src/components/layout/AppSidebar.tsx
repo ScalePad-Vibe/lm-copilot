@@ -17,7 +17,7 @@ export function AppSidebar() {
       >
         <ScalePadLogo className="h-[33px] w-auto text-foreground shrink-0" />
         <div className="w-px h-4 bg-border/40 shrink-0" />
-        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">LM Copilot</span>
+        <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">LM Copilot</span>
       </div>
 
       {/* Nav */}
