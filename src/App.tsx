@@ -7,7 +7,6 @@ import Home from "./pages/Home";
 import Initiatives from "./pages/Initiatives";
 import Goals from "./pages/Goals";
 import Opportunities from "./pages/Opportunities";
-import SettingsPage from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,7 +22,6 @@ const App = () => (
             <Route path="/initiatives"    element={<Initiatives />} />
             <Route path="/goals"          element={<Goals />} />
             <Route path="/opportunities"  element={<Opportunities />} />
-            <Route path="/settings"       element={<SettingsPage />} />
             <Route path="*"              element={<NotFound />} />
           </Routes>
         </BrowserRouter>
