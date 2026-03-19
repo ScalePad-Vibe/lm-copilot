@@ -15,15 +15,29 @@ import { supabase } from "@/integrations/supabase/client";
 
 // ─── Backend configuration check ─────────────────────────────────────────────
 
-/**
- * Returns true when the Lovable Cloud backend is connected and the
- * scalepad-proxy edge function is available.
- */
+/** True when Lovable Cloud env vars are present (Cloud is connected). */
 export function isBackendConfigured(): boolean {
   return !!(
     import.meta.env.VITE_SUPABASE_URL &&
     import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
   );
+}
+
+/**
+ * Probe whether the scalepad-proxy edge function is actually deployed.
+ * Sends a ping body — any non-404 response means the function exists.
+ */
+export async function isProxyDeployed(): Promise<boolean> {
+  if (!isBackendConfigured()) return false;
+  const { error } = await supabase.functions.invoke("scalepad-proxy", {
+    body: { ping: true },
+  });
+  // A missing function returns FunctionsHttpError with status 404.
+  // Any other response (even a validation error) means it's deployed.
+  if (error && "status" in error && (error as { status: number }).status === 404) {
+    return false;
+  }
+  return true;
 }
 
 // ─── Core proxy call ──────────────────────────────────────────────────────────
