@@ -13,6 +13,19 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
+// ─── Backend configuration check ─────────────────────────────────────────────
+
+/**
+ * Returns true when the Lovable Cloud backend is connected and the
+ * scalepad-proxy edge function is available.
+ */
+export function isBackendConfigured(): boolean {
+  return !!(
+    import.meta.env.VITE_SUPABASE_URL &&
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+  );
+}
+
 // ─── Core proxy call ──────────────────────────────────────────────────────────
 
 /**
@@ -31,6 +44,12 @@ export async function proxyCall(
   method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
   body?: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
+  if (!isBackendConfigured()) {
+    throw new Error(
+      "Backend not configured. Follow the setup instructions on the home page to enable the API proxy."
+    );
+  }
+
   const { data: json, error: fnError } = await supabase.functions.invoke(
     "scalepad-proxy",
     {
