@@ -10,8 +10,6 @@ const tools = [
     icon: RocketLaunchIcon,
     label: "Initiative Manager",
     category: "Planning",
-    accent: "from-indigo-500/20 to-violet-500/10",
-    iconColor: "text-indigo-400",
     description:
       "View, configure, and deploy initiatives across multiple clients simultaneously with real-time progress tracking.",
   },
@@ -20,8 +18,6 @@ const tools = [
     icon: FlagIcon,
     label: "Goal Manager",
     category: "Planning",
-    accent: "from-emerald-500/20 to-teal-500/10",
-    iconColor: "text-emerald-400",
     description:
       "Build goal templates and deploy them across your client base — status, period, and description in one step.",
   },
@@ -30,8 +26,6 @@ const tools = [
     icon: CurrencyDollarIcon,
     label: "List Opportunities",
     category: "Reporting",
-    accent: "from-amber-500/20 to-orange-500/10",
-    iconColor: "text-amber-400",
     description:
       "Pull live sales opportunities from the ScalePad API and filter by client, stage, or opportunity name.",
   },
