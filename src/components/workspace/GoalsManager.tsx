@@ -145,14 +145,15 @@ export function GoalsManager() {
   const filteredGoals = useMemo(() => goals.filter((g) => {
     if (libStatus !== "All" && g.status !== libStatus) return false;
     if (libPeriodType !== "All" && g.period?.type !== libPeriodType) return false;
+    if (libClient !== "All" && (g.client?.label ?? "") !== libClient) return false;
     if (libSearch) {
       const q = libSearch.toLowerCase();
       if (!g.title.toLowerCase().includes(q) && !(g.client?.label ?? "").toLowerCase().includes(q)) return false;
     }
     return true;
-  }), [goals, libSearch, libStatus, libPeriodType]);
+  }), [goals, libSearch, libStatus, libPeriodType, libClient]);
 
-  useEffect(() => { setLibPage(1); }, [libSearch, libStatus, libPeriodType]);
+  useEffect(() => { setLibPage(1); }, [libSearch, libStatus, libPeriodType, libClient]);
 
   const libTotalPages = Math.max(1, Math.ceil(filteredGoals.length / PAGE_SIZE));
   const pagedGoals    = filteredGoals.slice((libPage - 1) * PAGE_SIZE, libPage * PAGE_SIZE);

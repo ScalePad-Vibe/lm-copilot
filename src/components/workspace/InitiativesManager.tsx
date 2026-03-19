@@ -153,14 +153,15 @@ export function InitiativesManager() {
   const filteredInitiatives = useMemo(() => initiatives.filter((i) => {
     if (libStatus !== "All" && i.status !== libStatus) return false;
     if (libPriority !== "All" && i.priority !== libPriority) return false;
+    if (libClient !== "All" && (i.client?.label ?? "") !== libClient) return false;
     if (libSearch) {
       const q = libSearch.toLowerCase();
       if (!i.name.toLowerCase().includes(q) && !(i.client?.label ?? "").toLowerCase().includes(q)) return false;
     }
     return true;
-  }), [initiatives, libSearch, libStatus, libPriority]);
+  }), [initiatives, libSearch, libStatus, libPriority, libClient]);
 
-  useEffect(() => { setLibPage(1); }, [libSearch, libStatus, libPriority]);
+  useEffect(() => { setLibPage(1); }, [libSearch, libStatus, libPriority, libClient]);
 
   const libTotalPages = Math.max(1, Math.ceil(filteredInitiatives.length / PAGE_SIZE));
   const pagedInitiatives = filteredInitiatives.slice((libPage - 1) * PAGE_SIZE, libPage * PAGE_SIZE);
