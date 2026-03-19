@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { Loader2 } from "lucide-react";
 import { ScalePadLogo } from "@/components/ui/ScalePadLogo";
 
 interface ApiKeyPromptProps {
@@ -15,14 +14,16 @@ interface ApiKeyPromptProps {
 export function ApiKeyPrompt({ onDismiss }: ApiKeyPromptProps) {
   const { setApiKey } = useAuth();
   const [key, setKey] = useState("");
-  const [saving, setSaving] = useState(false);
 
-  const handleConnect = async () => {
+  const handleConnect = () => {
     if (!key.trim()) return;
-    setSaving(true);
-    await setApiKey(key.trim());
-    setSaving(false);
-    onDismiss?.();
+    try {
+      setApiKey(key.trim());
+      onDismiss?.();
+    } catch {
+      // sessionStorage may be unavailable (e.g. private browsing with storage blocked)
+      // — silently continue; the key will still be held in React state for this session
+    }
   };
 
   const card = (
@@ -53,10 +54,10 @@ export function ApiKeyPrompt({ onDismiss }: ApiKeyPromptProps) {
         />
         <button
           onClick={handleConnect}
-          disabled={!key.trim() || saving}
+          disabled={!key.trim()}
           className="w-full h-9 bg-gradient-to-br from-primary to-primary-dim text-primary-foreground text-sm font-semibold rounded-md disabled:opacity-40 flex items-center justify-center gap-2 transition-opacity"
         >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Connect & Launch"}
+          Connect &amp; Launch
         </button>
         {onDismiss && (
           <button

@@ -225,11 +225,13 @@ export async function deployGoalToClient(
     }
   };
 
-  let goalId!: string;
+  let goalId: string | undefined;
 
   await step(0, async () => {
     goalId = await createGoal(apiKey, clientId, form);
   });
 
-  await step(1, () => updateGoal(apiKey, goalId, form));
+  if (!goalId) throw new Error("Goal creation did not return an ID");
+
+  await step(1, () => updateGoal(apiKey, goalId!, form));
 }
