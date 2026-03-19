@@ -1,7 +1,8 @@
 import { useAuth } from "@/context/AuthContext";
 import { maskApiKey } from "@/lib/scalepad-api";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Settings, LogOut, KeyRound, Zap } from "lucide-react";
+import { Settings, LogOut, KeyRound } from "lucide-react";
+import scalePadLogo from "@/assets/scalepad-logo.svg";
 
 const tools = [
   { path: "/initiatives", icon: "🚀", label: "Initiative Manager" },
