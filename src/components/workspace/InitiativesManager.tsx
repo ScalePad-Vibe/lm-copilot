@@ -23,7 +23,7 @@ import {
   RefreshCw,
   ChevronRight,
 } from "lucide-react";
-import { Badge, StepIcon, Pagination, WorkspaceLoader, WorkspaceError } from "@/components/workspace/WorkspaceShared";
+import { Badge, StepIcon, Pagination, WorkspaceLoader, WorkspaceError } from "@/components/workspace/Shared";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
@@ -79,7 +79,7 @@ const smallSelectCls = "flex-1 h-7 px-2 bg-surface-container border-none rounded
 
 // --- Main Component ---
 
-export function InitiativeManagerWorkspace() {
+export function InitiativesManager() {
   const { apiKey } = useAuth();
 
   // Data
