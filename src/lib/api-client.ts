@@ -25,19 +25,20 @@ export function isBackendConfigured(): boolean {
 
 /**
  * Probe whether the scalepad-proxy edge function is actually deployed.
- * Sends a ping body — any non-404 response means the function exists.
+ * The proxy always returns HTTP 200 — so any error means it's not deployed.
  */
 export async function isProxyDeployed(): Promise<boolean> {
   if (!isBackendConfigured()) return false;
-  const { error } = await supabase.functions.invoke("scalepad-proxy", {
-    body: { ping: true },
-  });
-  // A missing function returns FunctionsHttpError with status 404.
-  // Any other response (even a validation error) means it's deployed.
-  if (error && "status" in error && (error as { status: number }).status === 404) {
+  try {
+    const { error } = await supabase.functions.invoke("scalepad-proxy", {
+      body: { ping: true },
+    });
+    // A deployed proxy always returns HTTP 200 (even for invalid requests).
+    // Any error (network failure, 404, CORS) means the function isn't there.
+    return !error;
+  } catch {
     return false;
   }
-  return true;
 }
 
 // ─── Core proxy call ──────────────────────────────────────────────────────────
