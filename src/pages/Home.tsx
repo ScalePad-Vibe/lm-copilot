@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Shell } from "@/components/layout/Shell";
 import { useAuth } from "@/context/AuthContext";
 import { ArrowRightIcon, KeyIcon, RocketLaunchIcon, FlagIcon, CurrencyDollarIcon } from "@heroicons/react/24/outline";
+import { ScalePadLogo } from "@/components/ui/ScalePadLogo";
 
 const tools = [
   {
