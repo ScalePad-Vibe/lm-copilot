@@ -204,10 +204,10 @@ export function GoalsManager() {
         await deleteGoal(apiKey, goal.id);
         deleted++;
       } catch (e) {
-        toast({ title: `Failed to delete "${goal.title}"`, description: e instanceof Error ? e.message : "Unknown error", variant: "destructive" });
+        toast.error(`Failed to delete "${goal.title}"`, { description: e instanceof Error ? e.message : "Unknown error" });
       }
     }
-    if (deleted > 0) toast({ title: `${deleted} goal(s) deleted` });
+    if (deleted > 0) toast.success(`${deleted} goal(s) deleted`);
     setCheckedIds(new Set());
     setShowDeleteModal(false);
     setDeleting(false);
