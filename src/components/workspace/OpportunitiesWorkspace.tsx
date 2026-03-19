@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Play, AlertTriangle, Filter } from "lucide-react";
+import { Loader2, AlertTriangle, Filter } from "lucide-react";
 import {
   Table,
   TableHeader,
@@ -30,7 +30,6 @@ export function OpportunitiesWorkspace() {
   const [loading, setLoading] = useState(false);
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [hasRun, setHasRun] = useState(false);
   const [filterClient, setFilterClient] = useState("__all__");
   const [filterStage, setFilterStage] = useState("__all__");
   const [filterName, setFilterName] = useState("");
@@ -53,11 +52,10 @@ export function OpportunitiesWorkspace() {
     });
   }, [opportunities, filterClient, filterStage, filterName]);
 
-  const handleRun = async () => {
+  const fetchOpportunities = async () => {
     setLoading(true);
     setError(null);
     setOpportunities([]);
-    setHasRun(true);
 
     try {
       const { data: json, error: fnError } = await supabase.functions.invoke("scalepad-proxy", {
@@ -70,18 +68,14 @@ export function OpportunitiesWorkspace() {
         },
       });
 
-      if (fnError) {
-        throw new Error(fnError.message || "Edge function error");
-      }
+      if (fnError) throw new Error(fnError.message || "Edge function error");
 
       if (json?.upstream_status && json.upstream_status !== 200) {
         const detail = json.errors?.[0]?.detail || json.error || `API returned ${json.upstream_status}`;
         throw new Error(detail);
       }
 
-      if (json?.error) {
-        throw new Error(json.error);
-      }
+      if (json?.error) throw new Error(json.error);
 
       const items: Opportunity[] = (json.data || json.items || json || []).map(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -100,37 +94,17 @@ export function OpportunitiesWorkspace() {
     }
   };
 
+  useEffect(() => {
+    fetchOpportunities();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="space-y-5">
-      <div className="bg-card border border-border rounded-lg p-5 space-y-4">
-        <h3 className="font-heading font-bold text-sm text-foreground">Workspace</h3>
-        <p className="text-xs text-muted-foreground">
-          Calls the live ScalePad API using your API key. Click Run to fetch opportunities.
-        </p>
-
-        <button
-          onClick={handleRun}
-          disabled={loading}
-          className="w-full h-10 bg-primary hover:bg-primary/90 disabled:opacity-60 text-primary-foreground font-medium rounded-md flex items-center justify-center gap-2 transition-colors duration-150"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Fetching Opportunities…
-            </>
-          ) : (
-            <>
-              <Play className="w-4 h-4" />
-              Run
-            </>
-          )}
-        </button>
-      </div>
-
       {loading && (
         <div className="bg-card border border-border rounded-lg p-8 flex flex-col items-center justify-center gap-3 animate-fade-in">
           <Loader2 className="w-8 h-8 text-primary animate-spin" />
-          <p className="text-sm text-muted-foreground">Calling ScalePad API…</p>
+          <p className="text-sm text-muted-foreground">Fetching opportunities…</p>
         </div>
       )}
 
@@ -144,7 +118,7 @@ export function OpportunitiesWorkspace() {
         </div>
       )}
 
-      {!loading && !error && hasRun && opportunities.length === 0 && (
+      {!loading && !error && opportunities.length === 0 && (
         <div className="bg-card border border-border rounded-lg p-5 text-center animate-fade-in">
           <p className="text-sm text-muted-foreground">No opportunities found.</p>
         </div>
