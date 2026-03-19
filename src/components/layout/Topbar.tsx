@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { ApiKeyPrompt } from "./ApiKeyPrompt";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface TopbarProps {
   title: string;
@@ -9,6 +19,7 @@ interface TopbarProps {
 export function Topbar({ title }: TopbarProps) {
   const { hasApiKey, clearApiKey } = useAuth();
   const [showPrompt, setShowPrompt] = useState(false);
+  const [showDisconnect, setShowDisconnect] = useState(false);
 
   return (
     <>
@@ -17,11 +28,14 @@ export function Topbar({ title }: TopbarProps) {
 
         {hasApiKey ? (
           <button
-            onClick={clearApiKey}
+            onClick={() => setShowDisconnect(true)}
             className="group flex items-center gap-1.5 h-7 px-3 bg-surface rounded-lg border border-border/20 hover:border-destructive/40 transition-colors"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-success" />
-            <span className="text-xs text-muted-foreground group-hover:text-destructive transition-colors">Connected</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-success group-hover:bg-destructive transition-colors" />
+            <span className="text-xs text-muted-foreground group-hover:text-destructive transition-colors">
+              <span className="group-hover:hidden">Connected</span>
+              <span className="hidden group-hover:inline">Disconnect</span>
+            </span>
           </button>
         ) : (
           <button
@@ -35,6 +49,28 @@ export function Topbar({ title }: TopbarProps) {
       </header>
 
       {showPrompt && <ApiKeyPrompt onDismiss={() => setShowPrompt(false)} />}
+
+      <AlertDialog open={showDisconnect} onOpenChange={setShowDisconnect}>
+        <AlertDialogContent className="bg-surface border-border/20 max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-sm font-semibold tracking-tight">Disconnect API key?</AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-muted-foreground leading-relaxed">
+              Your ScalePad API key will be removed from this session. You can reconnect at any time.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="h-8 text-xs bg-surface-container border-border/20 hover:bg-surface-container-high">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={clearApiKey}
+              className="h-8 text-xs bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Disconnect
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
