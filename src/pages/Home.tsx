@@ -90,10 +90,10 @@ export default function Home() {
     <Shell>
       <div className="relative h-full">
 
-        {/* Setup overlay — hidden once Lovable Cloud is connected */}
-        {!backendReady && <SetupOverlay />}
+        {/* Setup overlay — shown when Cloud isn't connected or proxy isn't deployed */}
+        {showOverlay && <SetupOverlay />}
 
-        <div className={`h-full overflow-y-auto px-8 pt-6 pb-10 space-y-8 animate-fade-up ${!backendReady ? "pointer-events-none select-none" : ""}`}>
+        <div className={`h-full overflow-y-auto px-8 pt-6 pb-10 space-y-8 animate-fade-up ${showOverlay ? "pointer-events-none select-none" : ""}`}>
 
           {/* Header */}
           <div className="flex items-center gap-4">
