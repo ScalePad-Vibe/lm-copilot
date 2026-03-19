@@ -17,7 +17,7 @@ export function SetupOverlay() {
   };
 
   return (
-    <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm">
       <div className="w-full max-w-lg mx-6 rounded-2xl border border-border/30 bg-surface shadow-2xl p-7 flex flex-col gap-5">
 
         {/* Icon + heading */}
