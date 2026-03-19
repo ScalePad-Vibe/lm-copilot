@@ -12,8 +12,10 @@ export function Shell({ title, children }: ShellProps) {
       <AppSidebar />
       <div className="ml-64 flex-1 flex flex-col overflow-hidden">
         <Topbar title={title} />
-        <main className="flex-1 overflow-hidden">
-          {children}
+        <main className="flex-1 overflow-auto bg-background">
+          <div className="px-6 py-5">
+            {children}
+          </div>
         </main>
       </div>
     </div>
