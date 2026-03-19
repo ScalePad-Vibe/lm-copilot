@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Shell } from "@/components/layout/Shell";
 import { ArrowRightIcon, ClipboardDocumentIcon, CheckIcon, WrenchScrewdriverIcon } from "@heroicons/react/24/outline";
 import { ScalePadLogo } from "@/components/ui/ScalePadLogo";
 import { NAV_TOOLS } from "@/lib/constants";
-import { isBackendConfigured } from "@/lib/api-client";
+import { isBackendConfigured, isProxyDeployed } from "@/lib/api-client";
 
 // ─── Exact prompt remixers paste into Lovable ────────────────────────────────
 const SETUP_PROMPT =
@@ -73,16 +73,27 @@ function SetupOverlay() {
 // ─── Home page ────────────────────────────────────────────────────────────────
 export default function Home() {
   const navigate = useNavigate();
-  const backendReady = isBackendConfigured();
+  // null = still checking, true = ready, false = needs setup
+  const [setupNeeded, setSetupNeeded] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!isBackendConfigured()) {
+      setSetupNeeded(true);
+      return;
+    }
+    isProxyDeployed().then((deployed) => setSetupNeeded(!deployed));
+  }, []);
+
+  const showOverlay = setupNeeded === true;
 
   return (
     <Shell>
       <div className="relative h-full">
 
-        {/* Setup overlay — hidden once Lovable Cloud is connected */}
-        {!backendReady && <SetupOverlay />}
+        {/* Setup overlay — shown when Cloud isn't connected or proxy isn't deployed */}
+        {showOverlay && <SetupOverlay />}
 
-        <div className={`h-full overflow-y-auto px-8 pt-6 pb-10 space-y-8 animate-fade-up ${!backendReady ? "pointer-events-none select-none" : ""}`}>
+        <div className={`h-full overflow-y-auto px-8 pt-6 pb-10 space-y-8 animate-fade-up ${showOverlay ? "pointer-events-none select-none" : ""}`}>
 
           {/* Header */}
           <div className="flex items-center gap-4">
