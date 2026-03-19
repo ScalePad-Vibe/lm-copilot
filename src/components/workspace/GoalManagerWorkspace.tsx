@@ -306,8 +306,8 @@ export function GoalManagerWorkspace() {
   if (loadError) return <WorkspaceError message={loadError} onRetry={loadData} />;
 
   return (
+    <>
 
-      <div className="flex gap-4 min-h-[600px]">
         {/* LEFT PANEL — Goal Library */}
         <div className="w-[40%] flex flex-col bg-card border border-border rounded-lg overflow-hidden">
           <div className="p-4 border-b border-border space-y-3">
