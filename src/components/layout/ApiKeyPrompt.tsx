@@ -1,6 +1,4 @@
-import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { Loader2 } from "lucide-react";
 import { ScalePadLogo } from "@/components/ui/ScalePadLogo";
 
 interface ApiKeyPromptProps {
