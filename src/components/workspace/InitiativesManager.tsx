@@ -315,7 +315,7 @@ export function InitiativesManager() {
                 </button>
               )}
             />
-            <PanelSearch value={libSearch} onChange={setLibSearch} placeholder="Search initiatives…" />
+            <PanelSearch value={libSearch} onChange={setLibSearch} placeholder="Search client or initiative…" />
             <div className="flex gap-2">
               <select value={libStatus} onChange={(e) => setLibStatus(e.target.value)} className={smallSelectCls}>
                 <option value="All">All Status</option>
