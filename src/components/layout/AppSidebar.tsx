@@ -1,7 +1,8 @@
 import { useAuth } from "@/context/AuthContext";
 import { maskApiKey } from "@/lib/scalepad-api";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Settings, LogOut, KeyRound, Zap } from "lucide-react";
+import { Settings, LogOut, KeyRound } from "lucide-react";
+import scalePadLogo from "@/assets/scalepad-logo.svg";
 
 const tools = [
   { path: "/initiatives", icon: "🚀", label: "Initiative Manager" },
@@ -20,14 +21,9 @@ export function AppSidebar() {
     <aside className="fixed left-0 top-0 bottom-0 w-64 bg-surface border-r border-border/15 flex flex-col z-30">
 
       {/* Brand */}
-      <div className="flex items-center gap-3 px-4 h-16 border-b border-border/15 shrink-0">
-        <div className="w-8 h-8 rounded-md bg-gradient-to-br from-primary to-primary-dim flex items-center justify-center shrink-0">
-          <Zap className="w-4 h-4 text-white fill-white" />
-        </div>
-        <div>
-          <h1 className="text-sm font-bold tracking-tighter text-foreground leading-none">ScalePad</h1>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">LMX Copilot</p>
-        </div>
+      <div className="flex flex-col justify-center px-4 h-16 border-b border-border/15 shrink-0 gap-1">
+        <img src={scalePadLogo} alt="ScalePad" className="h-5 w-auto object-contain object-left" />
+        <p className="text-[10px] text-muted-foreground uppercase tracking-widest">LMX Copilot</p>
       </div>
 
       {/* Nav */}
