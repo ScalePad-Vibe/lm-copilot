@@ -7,7 +7,7 @@ const tools = [
   {
     path: "/initiatives",
     icon: RocketLaunchIcon,
-    label: "Initiative Manager",
+    label: "Initiatives",
     category: "Planning",
     description:
       "View, configure, and deploy initiatives across multiple clients simultaneously with real-time progress tracking.",
@@ -15,7 +15,7 @@ const tools = [
   {
     path: "/goals",
     icon: FlagIcon,
-    label: "Goal Manager",
+    label: "Goals",
     category: "Planning",
     description:
       "Build goal templates and deploy them across your client base — status, period, and description in one step.",
