@@ -101,35 +101,10 @@ export function OpportunitiesWorkspace() {
 
   return (
     <div className="space-y-5">
-      <div className="bg-card border border-border rounded-lg p-5 space-y-4">
-        <h3 className="font-heading font-bold text-sm text-foreground">Workspace</h3>
-        <p className="text-xs text-muted-foreground">
-          Calls the live ScalePad API using your API key. Click Run to fetch opportunities.
-        </p>
-
-        <button
-          onClick={handleRun}
-          disabled={loading}
-          className="w-full h-10 bg-primary hover:bg-primary/90 disabled:opacity-60 text-primary-foreground font-medium rounded-md flex items-center justify-center gap-2 transition-colors duration-150"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Fetching Opportunities…
-            </>
-          ) : (
-            <>
-              <Play className="w-4 h-4" />
-              Run
-            </>
-          )}
-        </button>
-      </div>
-
       {loading && (
         <div className="bg-card border border-border rounded-lg p-8 flex flex-col items-center justify-center gap-3 animate-fade-in">
           <Loader2 className="w-8 h-8 text-primary animate-spin" />
-          <p className="text-sm text-muted-foreground">Calling ScalePad API…</p>
+          <p className="text-sm text-muted-foreground">Fetching opportunities…</p>
         </div>
       )}
 
@@ -143,7 +118,7 @@ export function OpportunitiesWorkspace() {
         </div>
       )}
 
-      {!loading && !error && hasRun && opportunities.length === 0 && (
+      {!loading && !error && opportunities.length === 0 && (
         <div className="bg-card border border-border rounded-lg p-5 text-center animate-fade-in">
           <p className="text-sm text-muted-foreground">No opportunities found.</p>
         </div>
