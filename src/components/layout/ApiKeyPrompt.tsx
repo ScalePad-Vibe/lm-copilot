@@ -74,7 +74,7 @@ export function ApiKeyPrompt({ onDismiss }: ApiKeyPromptProps) {
   if (onDismiss) {
     return (
       <div
-        className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-8 animate-fade-in"
+        className="fixed inset-y-0 left-64 right-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-8 animate-fade-in"
         onMouseDown={(e) => { if (e.target === e.currentTarget) onDismiss(); }}
       >
         {card}
