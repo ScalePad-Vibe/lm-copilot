@@ -19,15 +19,11 @@ import {
   X,
   Plus,
   Trash2,
-  CheckCircle2,
-  XCircle,
-  Clock,
   Play,
   RefreshCw,
-  AlertTriangle,
   ChevronRight,
-  ChevronLeft,
 } from "lucide-react";
+import { Badge, StepIcon, Pagination, WorkspaceLoader, WorkspaceError } from "@/components/workspace/WorkspaceShared";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
