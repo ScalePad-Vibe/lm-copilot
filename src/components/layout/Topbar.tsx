@@ -29,9 +29,7 @@ export function Topbar() {
         {/* Tool identity */}
         {currentTool ? (
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/15 border border-primary/20 shrink-0">
-              <currentTool.icon className="w-4 h-4 text-primary" />
-            </div>
+            <currentTool.icon className="w-5 h-5 text-muted-foreground shrink-0" />
             <div className="flex flex-col">
               <span className="text-sm font-semibold tracking-tight leading-none mb-0.5">
                 {currentTool.label}
