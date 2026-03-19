@@ -1,34 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { Shell } from "@/components/layout/Shell";
-import { ArrowRightIcon, RocketLaunchIcon, FlagIcon, CurrencyDollarIcon } from "@heroicons/react/24/outline";
+import { ArrowRightIcon } from "@heroicons/react/24/outline";
 import { ScalePadLogo } from "@/components/ui/ScalePadLogo";
-
-const tools = [
-  {
-    path: "/initiatives",
-    icon: RocketLaunchIcon,
-    label: "Initiatives Manager",
-    category: "Planning",
-    description:
-      "View, configure, and deploy initiatives across multiple clients simultaneously with real-time progress tracking.",
-  },
-  {
-    path: "/goals",
-    icon: FlagIcon,
-    label: "Goals Manager",
-    category: "Planning",
-    description:
-      "Build goal templates and deploy them across your client base — status, period, and description in one step.",
-  },
-  {
-    path: "/opportunities",
-    icon: CurrencyDollarIcon,
-    label: "List Opportunities",
-    category: "Reporting",
-    description:
-      "Pull live sales opportunities from the ScalePad API and filter by client, stage, or opportunity name.",
-  },
-];
+import { NAV_TOOLS } from "@/lib/constants";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -46,7 +20,7 @@ export default function Home() {
 
         {/* Tool cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {tools.map(({ path, icon: Icon, label, category, description }) => (
+          {NAV_TOOLS.map(({ path, icon: Icon, label, category, description }) => (
             <div
               key={path}
               onClick={() => navigate(path)}

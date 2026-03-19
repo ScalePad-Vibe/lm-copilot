@@ -1,17 +1,10 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { RocketLaunchIcon, FlagIcon, CurrencyDollarIcon } from "@heroicons/react/24/outline";
 import { ScalePadLogo } from "@/components/ui/ScalePadLogo";
-
-const tools = [
-  { path: "/initiatives", icon: RocketLaunchIcon,   label: "Initiatives Manager" },
-  { path: "/goals",       icon: FlagIcon,            label: "Goals Manager"       },
-  { path: "/opportunities", icon: CurrencyDollarIcon, label: "Opportunities"      },
-];
+import { NAV_TOOLS } from "@/lib/constants";
 
 export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-
   const isActive = (path: string) => location.pathname === path;
 
   return (
@@ -30,7 +23,7 @@ export function AppSidebar() {
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
         <p className="px-3 text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Tools</p>
-        {tools.map(({ path, icon: Icon, label }) => (
+        {NAV_TOOLS.map(({ path, icon: Icon, label }) => (
           <button
             key={path}
             onClick={() => navigate(path)}
