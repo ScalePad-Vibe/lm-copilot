@@ -98,6 +98,7 @@ export function InitiativesManager() {
   const [libSearch, setLibSearch] = useState("");
   const [libStatus, setLibStatus] = useState("All");
   const [libPriority, setLibPriority] = useState("All");
+  const [libClient, setLibClient] = useState("All");
   const [libPage, setLibPage] = useState(1);
 
   // Bulk delete

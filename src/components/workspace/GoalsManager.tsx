@@ -89,6 +89,7 @@ export function GoalsManager() {
   const [libSearch, setLibSearch]         = useState("");
   const [libStatus, setLibStatus]         = useState("All");
   const [libPeriodType, setLibPeriodType] = useState("All");
+  const [libClient, setLibClient]         = useState("All");
   const [libPage, setLibPage]             = useState(1);
 
   // Bulk delete
