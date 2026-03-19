@@ -1,65 +1,91 @@
-const corsHeaders = {
+/**
+ * scalepad-proxy — ScalePad API reverse proxy
+ *
+ * Routes authenticated requests from the browser to api.scalepad.com.
+ * This edge function exists for two reasons:
+ *
+ *   1. Security  — The user's ScalePad API key is forwarded server-side,
+ *                  avoiding exposure in browser network logs beyond this hop.
+ *   2. CORS      — api.scalepad.com does not allow direct browser requests;
+ *                  this function adds the required CORS headers.
+ *
+ * Request format (JSON body):
+ *   {
+ *     endpoint: string;  // Path relative to api.scalepad.com, e.g. "/lifecycle-manager/v1/initiatives"
+ *     method:   string;  // HTTP method, default "GET"
+ *     body?:    object;  // Optional JSON body for POST/PUT
+ *   }
+ *
+ * Required header:
+ *   x-scalepad-api-key: <user's ScalePad API key>
+ *
+ * Response format (always HTTP 200):
+ *   { upstream_status: number, ...upstreamResponseBody }
+ *
+ * The response always returns HTTP 200 so that supabase.functions.invoke()
+ * treats every call as successful and lets callers inspect `upstream_status`
+ * to handle 4xx/5xx errors themselves.
+ */
+
+const SCALEPAD_API_BASE = "https://api.scalepad.com";
+
+const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-scalepad-api-key",
 };
 
+function json(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+  });
+}
+
 Deno.serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: CORS_HEADERS });
   }
 
   try {
-    const { endpoint, method, body } = await req.json();
+    const { endpoint, method = "GET", body } = await req.json();
 
-    const scalepadApiKey = (req.headers.get("x-scalepad-api-key") || "").trim();
-    if (!scalepadApiKey) {
-      return new Response(
-        JSON.stringify({ error: "Missing x-scalepad-api-key header" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // ── Validate API key ──────────────────────────────────────────────────────
+    const apiKey = (req.headers.get("x-scalepad-api-key") ?? "").trim();
+    if (!apiKey) {
+      return json({ error: "Missing x-scalepad-api-key header" });
     }
 
+    // ── Validate endpoint path ────────────────────────────────────────────────
     if (!endpoint || !endpoint.startsWith("/") || endpoint.includes("..")) {
-      return new Response(
-        JSON.stringify({ error: "Invalid endpoint path" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json({ error: "Invalid endpoint path" });
     }
 
-    const response = await fetch(`https://api.scalepad.com${endpoint}`, {
-      method: method || "GET",
+    // ── Forward to ScalePad API ───────────────────────────────────────────────
+    const upstream = await fetch(`${SCALEPAD_API_BASE}${endpoint}`, {
+      method,
       headers: {
-        "x-api-key": scalepadApiKey,
-        Accept: "application/json",
+        "x-api-key": apiKey,
+        "Accept": "application/json",
         "Content-Type": "application/json",
       },
       body: body ? JSON.stringify(body) : undefined,
     });
 
-    // Handle 204 No Content (DELETE, some PUTs)
+    // ── Parse response ────────────────────────────────────────────────────────
+    // 204 No Content is normal for DELETE and some PUT calls — treat as success.
     let data: Record<string, unknown> = {};
-    const contentType = response.headers.get("content-type") || "";
-    if (response.status !== 204 && contentType.includes("application/json")) {
-      try {
-        data = await response.json();
-      } catch {
-        // empty body is fine
-      }
+    const contentType = upstream.headers.get("content-type") ?? "";
+    if (upstream.status !== 204 && contentType.includes("application/json")) {
+      try { data = await upstream.json(); } catch { /* empty body is fine */ }
     }
 
-    // Always return 200 to avoid supabase.functions.invoke treating non-2xx as errors
-    // Include upstream status so the frontend can handle errors from the body
-    return new Response(JSON.stringify({ upstream_status: response.status, ...data }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  } catch (error) {
-    console.error("Proxy error:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: message }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    // Always return HTTP 200; callers inspect `upstream_status` for errors.
+    return json({ upstream_status: upstream.status, ...data });
+
+  } catch (err) {
+    console.error("[scalepad-proxy] Unhandled error:", err);
+    return json({ error: err instanceof Error ? err.message : "Unexpected proxy error" });
   }
 });
