@@ -207,8 +207,12 @@ export async function deployInitiativeToClient(
   form: TemplateForm,
   onStepUpdate: (stepIndex: number, status: StepStatus, error?: string) => void
 ) {
-  /** Convert dollar string input ("149.99") → integer cents (14999) */
-  const toCents = (val: string) => Math.round(parseFloat(val || "0") * 100);
+  /** Convert dollar string input ("149.99") → integer cents (14999). Throws on invalid input. */
+  const toCents = (val: string): number => {
+    const n = parseFloat(val || "0");
+    if (isNaN(n) || n < 0) throw new Error(`Invalid amount: "${val}"`);
+    return Math.round(n * 100);
+  };
 
   const step = async (index: number, fn: () => Promise<void>) => {
     onStepUpdate(index, "running");
