@@ -46,11 +46,17 @@ export default function Home() {
       <div className="h-full overflow-y-auto px-8 py-10 space-y-10 animate-fade-up">
 
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">LM Copilot Tools</h1>
-          <p className="text-sm text-muted-foreground mt-1.5">
-            Connect your API key and launch any tool to get started.
-          </p>
+        <div className="flex items-center gap-4">
+          <ScalePadLogo className="h-9 w-auto text-foreground shrink-0" />
+          <div className="w-px h-8 bg-border/40 shrink-0" />
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">LM Copilot</span>
+            </div>
+            <p className="text-muted-foreground text-sm mt-0.5 leading-snug">
+              Connect to ScalePad to automate customer success.
+            </p>
+          </div>
         </div>
 
         {/* API key nudge */}
