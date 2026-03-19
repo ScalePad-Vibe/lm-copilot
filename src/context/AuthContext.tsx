@@ -1,51 +1,67 @@
+/**
+ * AuthContext — API key session management
+ *
+ * Stores the user's ScalePad API key in sessionStorage so it persists across
+ * page navigations within a single tab but is cleared when the tab closes.
+ *
+ * The key is never sent to any Lovable/Supabase storage — it only lives in the
+ * browser session and is forwarded to the ScalePad API via the proxy edge function.
+ *
+ * A SHA-256 hash of the key is derived and used as an anonymous `user_hash` for
+ * any Supabase operations (e.g. ratings, comments) that need a stable user identity
+ * without requiring a real auth account.
+ */
+
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 
-async function hashApiKey(key: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(key);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  return Array.from(new Uint8Array(hashBuffer))
+// ─── SHA-256 hash helper ──────────────────────────────────────────────────────
+
+/** Derive a hex SHA-256 hash of a string using the Web Crypto API. */
+async function sha256(input: string): Promise<string> {
+  const data = new TextEncoder().encode(input);
+  const buffer = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(buffer))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 }
 
+// ─── Context shape ────────────────────────────────────────────────────────────
+
 interface AuthState {
+  /** The raw API key, or empty string if not yet set. */
   apiKey: string;
+  /** True when a non-empty API key is present in the session. */
   hasApiKey: boolean;
+  /**
+   * SHA-256 hash of the API key — used as an anonymous, stable user identity
+   * for Supabase operations without requiring account creation.
+   */
   userHash: string;
-  recentApps: string[];
+  /** Persist a new API key to the session and derive its hash. */
   setApiKey: (key: string) => Promise<void>;
+  /** Remove the API key and hash from the session. */
   clearApiKey: () => void;
-  addRecentApp: (id: string) => void;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
 
+// ─── Provider ─────────────────────────────────────────────────────────────────
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [apiKey, setApiKeyState] = useState<string>(
-    () => sessionStorage.getItem("sp_api_key") || ""
+    () => sessionStorage.getItem("sp_api_key") ?? ""
   );
   const [userHash, setUserHash] = useState<string>(
-    () => sessionStorage.getItem("sp_user_hash") || ""
+    () => sessionStorage.getItem("sp_user_hash") ?? ""
   );
-  const [recentApps, setRecentApps] = useState<string[]>(() => {
-    try {
-      return JSON.parse(sessionStorage.getItem("sp_recent") || "[]");
-    } catch {
-      return [];
-    }
-  });
-
-  useEffect(() => {
-    sessionStorage.setItem("sp_recent", JSON.stringify(recentApps));
-  }, [recentApps]);
 
   const setApiKey = useCallback(async (key: string) => {
     const trimmed = key.trim();
     setApiKeyState(trimmed);
     sessionStorage.setItem("sp_api_key", trimmed);
+
     if (trimmed) {
-      const hash = await hashApiKey(trimmed);
+      const hash = await sha256(trimmed);
       setUserHash(hash);
       sessionStorage.setItem("sp_user_hash", hash);
     } else {
@@ -61,20 +77,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     sessionStorage.removeItem("sp_user_hash");
   }, []);
 
-  const addRecentApp = useCallback((id: string) => {
-    setRecentApps((prev) => [id, ...prev.filter((i) => i !== id)].slice(0, 3));
-  }, []);
-
   return (
     <AuthContext.Provider
       value={{
         apiKey,
         hasApiKey: apiKey.trim().length > 0,
         userHash,
-        recentApps,
         setApiKey,
         clearApiKey,
-        addRecentApp,
       }}
     >
       {children}
@@ -82,8 +92,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useAuth() {
+// ─── Hook ─────────────────────────────────────────────────────────────────────
+
+/** Access the auth context. Must be used inside <AuthProvider>. */
+export function useAuth(): AuthState {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>");
   return ctx;
 }

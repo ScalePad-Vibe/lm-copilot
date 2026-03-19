@@ -1,11 +1,20 @@
 /**
- * Initiative Manager API helpers.
- * All calls are proxied through the scalepad-proxy edge function.
+ * Initiative Manager — API helpers
+ *
+ * Covers the full lifecycle of a ScalePad initiative:
+ *   - Fetching all initiatives and clients (paginated)
+ *   - Creating, updating, and deleting initiatives
+ *   - Deploying an initiative template to one or more clients (step sequencer)
+ *
+ * All network calls go through `proxyCall` in api-client.ts, which forwards
+ * requests to the scalepad-proxy edge function → api.scalepad.com.
+ *
+ * ScalePad API reference: https://developers.scalepad.com
  */
 
-import { supabase } from "@/integrations/supabase/client";
+import { proxyCall, fetchAllPages } from "@/lib/api-client";
 
-// --- Types ---
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface Initiative {
   id: string;
@@ -36,7 +45,7 @@ export interface Client {
 
 export interface BudgetLineItem {
   label: string;
-  cost_subunits: number;
+  cost_subunits: number;  // amount in cents (subunits of the client's currency)
   cost_type: "Fixed" | "PerAsset";
 }
 
@@ -47,6 +56,7 @@ export interface RecurringLineItem {
   frequency: "Monthly" | "Yearly";
 }
 
+/** Form state used in the Initiative Builder UI */
 export interface TemplateForm {
   name: string;
   executive_summary: string;
@@ -58,12 +68,14 @@ export interface TemplateForm {
   recurring_line_items: RecurringLineItemForm[];
 }
 
+/** UI representation of a budget line item (amounts as dollar strings for input binding) */
 export interface BudgetLineItemForm {
   label: string;
-  amount: string; // dollars as string for input
+  amount: string;  // dollars as string, e.g. "149.99"
   cost_type: "Fixed" | "PerAsset";
 }
 
+/** UI representation of a recurring line item */
 export interface RecurringLineItemForm {
   label: string;
   amount: string;
@@ -71,6 +83,7 @@ export interface RecurringLineItemForm {
   frequency: "Monthly" | "Yearly";
 }
 
+/** Status of a single step in the deployment sequence */
 export type StepStatus = "pending" | "running" | "success" | "error";
 
 export interface DeploymentStep {
@@ -79,272 +92,169 @@ export interface DeploymentStep {
   error?: string;
 }
 
+/** Per-client deployment state used to render the deploy progress UI */
 export interface ClientDeployment {
   clientId: string;
   clientName: string;
   steps: DeploymentStep[];
 }
 
-// --- Helpers ---
+// ─── Read — paginated fetchers ────────────────────────────────────────────────
 
-async function proxyCall(
-  apiKey: string,
-  endpoint: string,
-  method: string = "GET",
-  body?: Record<string, unknown>
-) {
-  const { data: json, error: fnError } = await supabase.functions.invoke(
-    "scalepad-proxy",
-    {
-      body: { endpoint, method, body },
-      headers: { "x-scalepad-api-key": apiKey },
-    }
-  );
-
-  if (fnError) throw new Error(fnError.message || "Edge function error");
-
-  if (json?.upstream_status && json.upstream_status >= 400) {
-    const detail =
-      json.errors?.[0]?.detail || json.error || `API returned ${json.upstream_status}`;
-    if (json.upstream_status === 403) {
-      throw new Error(
-        "API key does not have permission for Lifecycle Manager. Please check your ScalePad permissions."
-      );
-    }
-    throw new Error(detail);
-  }
-
-  if (json?.error) throw new Error(json.error);
-
-  return json;
-}
-
-// --- Paginated fetchers ---
-
+/** Fetch every initiative in the account (auto-paginates). */
 export async function fetchAllInitiatives(apiKey: string): Promise<Initiative[]> {
-  const all: Initiative[] = [];
-  let cursor: string | null = null;
-
-  do {
-    const params = new URLSearchParams({ page_size: "100" });
-    if (cursor) params.set("cursor", cursor);
-
-    const json = await proxyCall(
-      apiKey,
-      `/lifecycle-manager/v1/initiatives?${params.toString()}`
-    );
-
-    const items = json.data || [];
-    all.push(...items);
-    cursor = json.next_cursor || null;
-  } while (cursor);
-
-  return all;
+  return fetchAllPages<Initiative>(
+    apiKey,
+    "/lifecycle-manager/v1/initiatives",
+    { page_size: "100" }
+  );
 }
 
+/** Fetch every client in the account, sorted by name (auto-paginates). */
 export async function fetchAllClients(apiKey: string): Promise<Client[]> {
-  const all: Client[] = [];
-  let cursor: string | null = null;
-
-  do {
-    const params = new URLSearchParams({ page_size: "200", sort: "name" });
-    if (cursor) params.set("cursor", cursor);
-
-    const json = await proxyCall(
-      apiKey,
-      `/core/v1/clients?${params.toString()}`
-    );
-
-    const items = json.data || [];
-    all.push(...items);
-    cursor = json.next_cursor || null;
-  } while (cursor);
-
-  return all;
+  return fetchAllPages<Client>(
+    apiKey,
+    "/core/v1/clients",
+    { page_size: "200", sort: "name" }
+  );
 }
 
-// --- Write helpers ---
+// ─── Write — individual update operations ────────────────────────────────────
 
+/**
+ * Create a new empty initiative shell for a client.
+ * Returns the new initiative's ID.
+ */
 async function createInitiative(
   apiKey: string,
   clientId: string,
   name: string,
-  summary: string
+  executiveSummary: string
 ): Promise<string> {
-  const json = await proxyCall(
-    apiKey,
-    "/lifecycle-manager/v1/initiatives",
-    "POST",
-    {
-      client_key: { id: clientId },
-      name,
-      executive_summary: summary,
-    }
-  );
-  return json.id;
+  const json = await proxyCall(apiKey, "/lifecycle-manager/v1/initiatives", "POST", {
+    client_key: { id: clientId },
+    name,
+    executive_summary: executiveSummary,
+  });
+  return json.id as string;
 }
 
-async function updateInitiativeStatus(
-  apiKey: string,
-  initiativeId: string,
-  status: string
-) {
-  await proxyCall(
-    apiKey,
-    `/lifecycle-manager/v1/initiatives/${initiativeId}/status`,
-    "PUT",
-    { status }
-  );
+async function updateInitiativeStatus(apiKey: string, id: string, status: string) {
+  await proxyCall(apiKey, `/lifecycle-manager/v1/initiatives/${id}/status`, "PUT", { status });
 }
 
-async function updateInitiativePriority(
-  apiKey: string,
-  initiativeId: string,
-  priority: string
-) {
-  await proxyCall(
-    apiKey,
-    `/lifecycle-manager/v1/initiatives/${initiativeId}/priority`,
-    "PUT",
-    { priority }
-  );
+async function updateInitiativePriority(apiKey: string, id: string, priority: string) {
+  await proxyCall(apiKey, `/lifecycle-manager/v1/initiatives/${id}/priority`, "PUT", { priority });
 }
 
 async function updateInitiativeSchedule(
   apiKey: string,
-  initiativeId: string,
+  id: string,
   fiscalQuarter: { year: number; quarter: number } | null
 ) {
-  await proxyCall(
-    apiKey,
-    `/lifecycle-manager/v1/initiatives/${initiativeId}/schedule`,
-    "PUT",
-    { fiscal_quarter: fiscalQuarter }
-  );
+  await proxyCall(apiKey, `/lifecycle-manager/v1/initiatives/${id}/schedule`, "PUT", {
+    fiscal_quarter: fiscalQuarter,
+  });
 }
 
 async function updateInitiativeBudget(
   apiKey: string,
-  initiativeId: string,
-  budgetLineItems: BudgetLineItem[]
+  id: string,
+  lineItems: BudgetLineItem[]
 ) {
-  await proxyCall(
-    apiKey,
-    `/lifecycle-manager/v1/initiatives/${initiativeId}/budget`,
-    "PUT",
-    { budget_line_items: budgetLineItems }
-  );
+  await proxyCall(apiKey, `/lifecycle-manager/v1/initiatives/${id}/budget`, "PUT", {
+    budget_line_items: lineItems,
+  });
 }
 
 async function updateInitiativeRecurring(
   apiKey: string,
-  initiativeId: string,
-  recurringLineItems: RecurringLineItem[]
+  id: string,
+  lineItems: RecurringLineItem[]
 ) {
-  await proxyCall(
-    apiKey,
-    `/lifecycle-manager/v1/initiatives/${initiativeId}/recurring`,
-    "PUT",
-    { recurring_line_items: recurringLineItems }
-  );
+  await proxyCall(apiKey, `/lifecycle-manager/v1/initiatives/${id}/recurring`, "PUT", {
+    recurring_line_items: lineItems,
+  });
 }
 
-// --- Delete helper ---
-
-export async function deleteInitiative(
-  apiKey: string,
-  initiativeId: string
-) {
-  await proxyCall(
-    apiKey,
-    `/lifecycle-manager/v1/initiatives/${initiativeId}`,
-    "DELETE"
-  );
+/** Permanently delete an initiative by ID. */
+export async function deleteInitiative(apiKey: string, initiativeId: string) {
+  await proxyCall(apiKey, `/lifecycle-manager/v1/initiatives/${initiativeId}`, "DELETE");
 }
 
-// --- Deployment orchestrator ---
+// ─── Deploy — step sequencer ──────────────────────────────────────────────────
 
+/**
+ * Deploy an initiative template to a single client.
+ *
+ * Executes 6 sequential API calls. After each call, `onStepUpdate` is fired so
+ * the UI can display live progress. Throws on first failure — the caller is
+ * responsible for marking the deployment as failed and continuing to the next client.
+ *
+ * Steps:
+ *   0 — Create initiative shell
+ *   1 — Set status
+ *   2 — Set priority
+ *   3 — Set schedule (fiscal quarter)
+ *   4 — Set one-time budget line items
+ *   5 — Set recurring line items
+ *
+ * @param onStepUpdate - Called after each step with its index, new status, and optional error message.
+ */
 export async function deployInitiativeToClient(
   apiKey: string,
   clientId: string,
   form: TemplateForm,
   onStepUpdate: (stepIndex: number, status: StepStatus, error?: string) => void
 ) {
-  const dollarsToCents = (val: string) => Math.round(parseFloat(val || "0") * 100);
+  /** Convert dollar string input ("149.99") → integer cents (14999) */
+  const toCents = (val: string) => Math.round(parseFloat(val || "0") * 100);
 
-  // Step 1: Create shell
-  onStepUpdate(0, "running");
-  let initiativeId: string;
-  try {
+  const step = async (index: number, fn: () => Promise<void>) => {
+    onStepUpdate(index, "running");
+    try {
+      await fn();
+      onStepUpdate(index, "success");
+    } catch (e) {
+      onStepUpdate(index, "error", e instanceof Error ? e.message : "Unknown error");
+      throw e;
+    }
+  };
+
+  let initiativeId!: string;
+
+  await step(0, async () => {
     initiativeId = await createInitiative(apiKey, clientId, form.name, form.executive_summary);
-    onStepUpdate(0, "success");
-  } catch (e) {
-    onStepUpdate(0, "error", e instanceof Error ? e.message : "Failed");
-    throw e;
-  }
+  });
 
-  // Step 2: Set Status
-  onStepUpdate(1, "running");
-  try {
-    await updateInitiativeStatus(apiKey, initiativeId, form.status);
-    onStepUpdate(1, "success");
-  } catch (e) {
-    onStepUpdate(1, "error", e instanceof Error ? e.message : "Failed");
-    throw e;
-  }
+  await step(1, () => updateInitiativeStatus(apiKey, initiativeId, form.status));
+  await step(2, () => updateInitiativePriority(apiKey, initiativeId, form.priority));
+  await step(3, () =>
+    updateInitiativeSchedule(apiKey, initiativeId, form.unscheduled ? null : form.fiscal_quarter)
+  );
 
-  // Step 3: Set Priority
-  onStepUpdate(2, "running");
-  try {
-    await updateInitiativePriority(apiKey, initiativeId, form.priority);
-    onStepUpdate(2, "success");
-  } catch (e) {
-    onStepUpdate(2, "error", e instanceof Error ? e.message : "Failed");
-    throw e;
-  }
-
-  // Step 4: Set Schedule
-  onStepUpdate(3, "running");
-  try {
-    await updateInitiativeSchedule(
+  await step(4, () =>
+    updateInitiativeBudget(
       apiKey,
       initiativeId,
-      form.unscheduled ? null : form.fiscal_quarter
-    );
-    onStepUpdate(3, "success");
-  } catch (e) {
-    onStepUpdate(3, "error", e instanceof Error ? e.message : "Failed");
-    throw e;
-  }
+      form.budget_line_items.map((item) => ({
+        label: item.label,
+        cost_subunits: toCents(item.amount),
+        cost_type: item.cost_type,
+      }))
+    )
+  );
 
-  // Step 5: Set Budget
-  onStepUpdate(4, "running");
-  try {
-    const budgetItems: BudgetLineItem[] = form.budget_line_items.map((item) => ({
-      label: item.label,
-      cost_subunits: dollarsToCents(item.amount),
-      cost_type: item.cost_type,
-    }));
-    await updateInitiativeBudget(apiKey, initiativeId, budgetItems);
-    onStepUpdate(4, "success");
-  } catch (e) {
-    onStepUpdate(4, "error", e instanceof Error ? e.message : "Failed");
-    throw e;
-  }
-
-  // Step 6: Set Recurring
-  onStepUpdate(5, "running");
-  try {
-    const recurringItems: RecurringLineItem[] = form.recurring_line_items.map((item) => ({
-      label: item.label,
-      cost_subunits: dollarsToCents(item.amount),
-      cost_type: item.cost_type,
-      frequency: item.frequency,
-    }));
-    await updateInitiativeRecurring(apiKey, initiativeId, recurringItems);
-    onStepUpdate(5, "success");
-  } catch (e) {
-    onStepUpdate(5, "error", e instanceof Error ? e.message : "Failed");
-    throw e;
-  }
+  await step(5, () =>
+    updateInitiativeRecurring(
+      apiKey,
+      initiativeId,
+      form.recurring_line_items.map((item) => ({
+        label: item.label,
+        cost_subunits: toCents(item.amount),
+        cost_type: item.cost_type,
+        frequency: item.frequency,
+      }))
+    )
+  );
 }
