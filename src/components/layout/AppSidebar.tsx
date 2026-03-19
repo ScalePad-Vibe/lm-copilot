@@ -15,7 +15,7 @@ export function AppSidebar() {
         onClick={() => navigate("/")}
         className="flex items-center gap-2.5 px-4 h-16 border-b border-border/15 shrink-0 cursor-pointer hover:bg-surface-container transition-colors"
       >
-        <ScalePadLogo className="h-[26px] w-auto text-foreground shrink-0" />
+        <ScalePadLogo className="h-[33px] w-auto text-foreground shrink-0" />
         <div className="w-px h-4 bg-border/40 shrink-0" />
         <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">LM Copilot</span>
       </div>
