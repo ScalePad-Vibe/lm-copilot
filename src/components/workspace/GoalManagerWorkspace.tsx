@@ -355,14 +355,23 @@ export function GoalManagerWorkspace() {
 
         {/* RIGHT PANEL — Builder */}
         <div className="w-[60%] flex flex-col bg-surface border border-border/15 rounded-xl overflow-hidden">
-          <div className="px-4 pt-4 pb-3 border-b border-border/15 flex items-center justify-between">
-            <div>
+          <div className="px-4 pt-4 pb-3 border-b border-border/15 flex items-center justify-between gap-3">
+            <div className="min-w-0">
               <p className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Goal Builder</p>
-              <p className="text-xs text-foreground mt-0.5 font-medium">
+              <p className="text-xs text-foreground mt-0.5 font-medium truncate">
                 {selectedGoal ? selectedGoal.title : "New Goal"}
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 shrink-0">
+              {!form.title.trim() && (
+                <span className="text-[10px] text-warning/80 bg-warning/10 px-2 py-0.5 rounded-full">Name required</span>
+              )}
+              {form.title.trim() && selectedClientIds.length === 0 && (
+                <span className="text-[10px] text-muted-foreground bg-surface-container px-2 py-0.5 rounded-full">Select clients →</span>
+              )}
+              {canDeploy && (
+                <span className="text-[10px] text-success bg-success/10 px-2 py-0.5 rounded-full">Ready to deploy</span>
+              )}
               {selectedGoal && (
                 <button
                   onClick={handleUpdateGoal}
@@ -370,7 +379,7 @@ export function GoalManagerWorkspace() {
                   className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   {updating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Pencil className="w-3 h-3" />}
-                  Update This Goal
+                  Update
                 </button>
               )}
               <button onClick={clearForm} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
@@ -502,8 +511,6 @@ export function GoalManagerWorkspace() {
               <Play className="w-4 h-4" />
               Deploy Goal to {selectedClientIds.length} Client{selectedClientIds.length !== 1 ? "s" : ""}
             </button>
-            {!form.title.trim() && <p className="text-[10px] text-destructive mt-1">Goal title is required</p>}
-            {selectedClientIds.length === 0 && <p className="text-[10px] text-warning mt-1">Select at least one client in the Clients tab</p>}
           </div>
         </div>
       </div>
