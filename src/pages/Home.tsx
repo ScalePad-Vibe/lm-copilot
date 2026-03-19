@@ -73,7 +73,18 @@ function SetupOverlay() {
 // ─── Home page ────────────────────────────────────────────────────────────────
 export default function Home() {
   const navigate = useNavigate();
-  const backendReady = isBackendConfigured();
+  // null = still checking, true = ready, false = needs setup
+  const [setupNeeded, setSetupNeeded] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!isBackendConfigured()) {
+      setSetupNeeded(true);
+      return;
+    }
+    isProxyDeployed().then((deployed) => setSetupNeeded(!deployed));
+  }, []);
+
+  const showOverlay = setupNeeded === true;
 
   return (
     <Shell>
