@@ -26,7 +26,7 @@ export function AppSidebar() {
         </div>
         <div>
           <h1 className="text-sm font-bold tracking-tighter text-foreground leading-none">ScalePad</h1>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">Lifecycle Tools</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">LMX Copilot</p>
         </div>
       </div>
 
