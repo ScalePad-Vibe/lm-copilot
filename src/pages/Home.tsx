@@ -34,7 +34,9 @@ function SetupOverlay() {
           </div>
           <div>
             <p className="text-sm font-semibold text-foreground">One-time setup required</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Paste the prompt below into Lovable to enable the API proxy.</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              The ScalePad API doesn't allow direct browser requests (CORS), so this app routes calls through a server-side proxy. Paste the prompt below into Lovable to deploy it.
+            </p>
           </div>
         </div>
 
