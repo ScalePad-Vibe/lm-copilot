@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Play, AlertTriangle, Filter } from "lucide-react";
+import { Loader2, AlertTriangle, Filter } from "lucide-react";
 import {
   Table,
   TableHeader,
@@ -30,7 +30,6 @@ export function OpportunitiesWorkspace() {
   const [loading, setLoading] = useState(false);
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [hasRun, setHasRun] = useState(false);
   const [filterClient, setFilterClient] = useState("__all__");
   const [filterStage, setFilterStage] = useState("__all__");
   const [filterName, setFilterName] = useState("");
@@ -53,11 +52,10 @@ export function OpportunitiesWorkspace() {
     });
   }, [opportunities, filterClient, filterStage, filterName]);
 
-  const handleRun = async () => {
+  const fetchOpportunities = async () => {
     setLoading(true);
     setError(null);
     setOpportunities([]);
-    setHasRun(true);
 
     try {
       const { data: json, error: fnError } = await supabase.functions.invoke("scalepad-proxy", {
@@ -70,18 +68,14 @@ export function OpportunitiesWorkspace() {
         },
       });
 
-      if (fnError) {
-        throw new Error(fnError.message || "Edge function error");
-      }
+      if (fnError) throw new Error(fnError.message || "Edge function error");
 
       if (json?.upstream_status && json.upstream_status !== 200) {
         const detail = json.errors?.[0]?.detail || json.error || `API returned ${json.upstream_status}`;
         throw new Error(detail);
       }
 
-      if (json?.error) {
-        throw new Error(json.error);
-      }
+      if (json?.error) throw new Error(json.error);
 
       const items: Opportunity[] = (json.data || json.items || json || []).map(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -99,6 +93,11 @@ export function OpportunitiesWorkspace() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchOpportunities();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="space-y-5">
