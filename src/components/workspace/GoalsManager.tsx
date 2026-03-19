@@ -59,9 +59,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 // --- Shared style tokens ---
-const inputCls = "w-full h-9 px-3 bg-surface-container border-none rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary";
-const selectCls = "w-full h-9 px-3 bg-surface-container border-none rounded-md text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary";
-const smallSelectCls = "flex-1 h-7 px-2 bg-surface-container border-none rounded text-[11px] text-foreground focus:outline-none";
+
 
 function emptyForm(): GoalTemplateForm {
   return {
