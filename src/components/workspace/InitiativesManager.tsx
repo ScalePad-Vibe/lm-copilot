@@ -98,6 +98,7 @@ export function InitiativesManager() {
   const [libSearch, setLibSearch] = useState("");
   const [libStatus, setLibStatus] = useState("All");
   const [libPriority, setLibPriority] = useState("All");
+  const [libClient, setLibClient] = useState("All");
   const [libPage, setLibPage] = useState(1);
 
   // Bulk delete
@@ -152,14 +153,20 @@ export function InitiativesManager() {
   const filteredInitiatives = useMemo(() => initiatives.filter((i) => {
     if (libStatus !== "All" && i.status !== libStatus) return false;
     if (libPriority !== "All" && i.priority !== libPriority) return false;
+    if (libClient !== "All" && (i.client?.label ?? "") !== libClient) return false;
     if (libSearch) {
       const q = libSearch.toLowerCase();
       if (!i.name.toLowerCase().includes(q) && !(i.client?.label ?? "").toLowerCase().includes(q)) return false;
     }
     return true;
-  }), [initiatives, libSearch, libStatus, libPriority]);
+  }), [initiatives, libSearch, libStatus, libPriority, libClient]);
 
-  useEffect(() => { setLibPage(1); }, [libSearch, libStatus, libPriority]);
+  useEffect(() => { setLibPage(1); }, [libSearch, libStatus, libPriority, libClient]);
+
+  const libClientOptions = useMemo(
+    () => [...new Set(initiatives.map((i) => i.client?.label).filter(Boolean))].sort() as string[],
+    [initiatives]
+  );
 
   const libTotalPages = Math.max(1, Math.ceil(filteredInitiatives.length / PAGE_SIZE));
   const pagedInitiatives = filteredInitiatives.slice((libPage - 1) * PAGE_SIZE, libPage * PAGE_SIZE);
@@ -324,6 +331,10 @@ export function InitiativesManager() {
               <select value={libPriority} onChange={(e) => setLibPriority(e.target.value)} className={smallSelectCls}>
                 <option value="All">All Priority</option>
                 {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
+              </select>
+              <select value={libClient} onChange={(e) => setLibClient(e.target.value)} className={smallSelectCls}>
+                <option value="All">All Clients</option>
+                {libClientOptions.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
           </PanelHeader>
