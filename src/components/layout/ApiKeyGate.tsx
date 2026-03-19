@@ -39,6 +39,10 @@ export function ApiKeyGate({ children }: ApiKeyGateProps) {
             onKeyDown={(e) => e.key === "Enter" && handleConnect()}
             placeholder="Enter API key…"
             autoFocus
+            autoComplete="off"
+            data-1p-ignore
+            data-lpignore="true"
+            data-form-type="other"
             className="w-full h-9 px-3 bg-surface-container border-none rounded-md text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
           />
           <button
