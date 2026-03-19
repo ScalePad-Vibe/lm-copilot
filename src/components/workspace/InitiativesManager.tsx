@@ -621,7 +621,7 @@ export function InitiativesManager() {
           {/* Deploy Button */}
           <div className="p-4 border-t border-border/15">
             <button
-              onClick={handleDeploy}
+              onClick={() => setShowConfirmDeploy(true)}
               disabled={!canDeploy}
               className="w-full h-10 bg-gradient-to-br from-primary to-primary-dim disabled:opacity-40 disabled:cursor-not-allowed text-primary-foreground font-semibold rounded-lg flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
             >
@@ -632,7 +632,36 @@ export function InitiativesManager() {
         </div>
       </div>
 
-      {/* DEPLOYMENT MODAL */}
+      {/* DEPLOY CONFIRMATION DIALOG */}
+      <AlertDialog open={showConfirmDeploy} onOpenChange={setShowConfirmDeploy}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Deployment</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-sm text-muted-foreground">
+                <p>
+                  <span className="font-semibold text-foreground">"{form.name}"</span> will be deployed to the following {selectedClientIds.length} client{selectedClientIds.length !== 1 ? "s" : ""}:
+                </p>
+                <ul className="list-disc list-inside space-y-0.5 max-h-40 overflow-y-auto">
+                  {selectedClientIds.map((cid) => {
+                    const name = clients.find((c) => c.id === cid)?.name || cid;
+                    return <li key={cid} className="text-foreground text-xs">{name}</li>;
+                  })}
+                </ul>
+                <p className="text-xs">This will create a new initiative for each selected client.</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setShowConfirmDeploy(false); handleDeploy(); }}>
+              Deploy
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+
       {deployState?.isOpen && (
         <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
           <div className="w-full max-w-2xl bg-surface border border-border/20 rounded-xl shadow-2xl max-h-[85vh] flex flex-col animate-scale-in">
