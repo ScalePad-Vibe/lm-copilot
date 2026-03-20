@@ -3,10 +3,10 @@ import { ClipboardDocumentIcon, CheckIcon, WrenchScrewdriverIcon } from "@heroic
 import { ScalePadLogo } from "@/components/ui/ScalePadLogo";
 
 const SETUP_PROMPT =
-  `Enable Lovable Cloud on this project. Then deploy the edge function at ` +
-  `supabase/functions/scalepad-proxy/index.ts. Finally, delete ` +
-  `src/components/layout/SetupOverlay.tsx and remove its import and usage from ` +
-  `src/pages/Home.tsx so this setup screen no longer appears.`;
+  `Enable Lovable Cloud on this project. Then deploy the edge function ` +
+  `supabase/functions/scalepad-proxy/index.ts using the Supabase deploy tool. ` +
+  `Once deployed, delete src/components/layout/SetupOverlay.tsx and remove its ` +
+  `import and usage from src/pages/Home.tsx so this setup screen no longer appears.`;
 
 export function SetupOverlay() {
   const [copied, setCopied] = useState(false);
